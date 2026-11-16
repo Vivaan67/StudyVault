@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="StudyVault is a library of interactive study guides, flashcards, and practice tests.">
+  <title>StudyVault — Learn smarter</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #090d16;
+      --panel: #111827;
+      --panel2: #151f31;
+      --line: rgba(255,255,255,.09);
+      --text: #f4f7ff;
+      --muted: #9aa8bf;
+      --blue: #76a9ff;
+      --mint: #75e0c0;
+      --purple: #b59aff;
+      --pink: #f2a2d2;
+      --shadow: 0 22px 70px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 12% 0%, rgba(67,120,220,.19), transparent 34rem),
+        radial-gradient(ellipse at 90% 18%, rgba(129,86,210,.14), transparent 32rem),
+        var(--bg);
+    }
+    a { color: inherit; text-decoration: none; }
+    button, input { font: inherit; }
+    .wrap { width: min(1160px, calc(100% - 40px)); margin: 0 auto; }
+    header {
+      position: sticky; top: 0; z-index: 20; backdrop-filter: blur(18px);
+      background: rgba(9,13,22,.78); border-bottom: 1px solid var(--line);
+    }
+    .nav { height: 72px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+    .brand { display:flex; align-items:center; gap:11px; font-weight:850; font-size:1.22rem; letter-spacing:-.5px; }
+    .brand-mark {
+      display:grid; place-items:center; width:38px; height:38px; border-radius:12px;
+      background: linear-gradient(140deg,#79e2c3,#76a9ff); color:#07121b; font-size:1.2rem;
+      box-shadow: 0 8px 24px rgba(117,224,192,.2);
+    }
+    .brand span:last-child { color:#91b8ff; }
+    .nav-note { color:var(--muted); font-size:.9rem; }
+    .hero { padding:86px 0 48px; position:relative; }
+    .eyebrow {
+      display:inline-flex; align-items:center; gap:8px; color:#a8c5ff; font-size:.76rem;
+      font-weight:800; letter-spacing:1.7px; text-transform:uppercase;
+      padding:8px 12px; border:1px solid rgba(118,169,255,.22);
+      border-radius:999px; background:rgba(118,169,255,.08);
+    }
+    h1 { margin:22px 0 16px; font-size:clamp(2.8rem,7vw,5.7rem); line-height:.99; letter-spacing:-.065em; max-width:850px; }
+    h1 .gradient {
+      background:linear-gradient(95deg,#91c0ff 5%,#b7a2ff 52%,#83e5ca 100%);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .hero-copy { max-width:650px; color:var(--muted); font-size:1.08rem; line-height:1.75; }
+    .hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+    .btn {
+      display:inline-flex; justify-content:center; align-items:center; gap:9px; border:1px solid transparent;
+      border-radius:13px; padding:13px 18px; font-weight:750; cursor:pointer; transition:.2s ease;
+    }
+    .btn:hover { transform:translateY(-2px); filter:brightness(1.08); }
+    .btn-primary { background:linear-gradient(135deg,#8eb8ff,#9c8cf3); color:#101426; box-shadow:0 10px 28px rgba(118,169,255,.2); }
+    .btn-quiet { background:rgba(255,255,255,.055); border-color:var(--line); color:var(--text); }
+    .hero-stats { display:flex; flex-wrap:wrap; gap:30px; margin-top:48px; padding-top:25px; border-top:1px solid var(--line); }
+    .stat strong { display:block; font-size:1.55rem; letter-spacing:-.04em; }
+    .stat span { color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:1.2px; font-weight:700; }
+    .section { padding:38px 0 58px; }
+    .section-head { display:flex; justify-content:space-between; align-items:end; gap:20px; margin-bottom:22px; }
+    .section-head h2 { margin:0 0 7px; font-size:clamp(1.6rem,3vw,2.2rem); letter-spacing:-.04em; }
+    .section-head p { margin:0; color:var(--muted); }
+    .search-row { display:flex; gap:12px; margin:24px 0 18px; }
+    .search-box { flex:1; position:relative; }
+    .search-box span { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:#8192ad; }
+    .search-box input {
+      width:100%; padding:15px 16px 15px 46px; border-radius:14px; outline:none;
+      color:var(--text); background:rgba(17,24,39,.85); border:1px solid var(--line);
+    }
+    .search-box input:focus { border-color:rgba(118,169,255,.65); box-shadow:0 0 0 4px rgba(118,169,255,.09); }
+    .filters { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 25px; }
+    .filter {
+      border:1px solid var(--line); border-radius:999px; padding:9px 14px;
+      background:rgba(255,255,255,.035); color:var(--muted); font-weight:700; cursor:pointer;
+    }
+    .filter.active, .filter:hover { background:rgba(118,169,255,.13); border-color:rgba(118,169,255,.38); color:#dce8ff; }
+    .grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px; }
+    .card {
+      min-width:0; overflow:hidden; border:1px solid var(--line); border-radius:20px;
+      background:linear-gradient(155deg,rgba(22,32,51,.96),rgba(14,20,33,.96));
+      box-shadow:0 10px 35px rgba(0,0,0,.12); transition:transform .22s,border-color .22s,box-shadow .22s;
+    }
+    .card:hover { transform:translateY(-5px); border-color:rgba(143,178,255,.35); box-shadow:var(--shadow); }
+    .card-art { height:145px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+    .card-art::before,.card-art::after { content:""; position:absolute; border-radius:50%; border:1px solid rgba(255,255,255,.16); }
+    .card-art::before { width:190px;height:190px;right:-25px;top:-85px; }
+    .card-art::after { width:130px;height:130px;left:-35px;bottom:-75px; }
+    .art-icon { font-size:3.2rem; filter:drop-shadow(0 10px 20px rgba(0,0,0,.2)); position:relative; z-index:1; }
+    .art-bio { background:linear-gradient(135deg,#164b42,#183c5b); }
+    .art-chem { background:linear-gradient(135deg,#48306f,#202e5b); }
+    .art-math { background:linear-gradient(135deg,#17466a,#24365f); }
+    .art-history { background:linear-gradient(135deg,#70452c,#44304c); }
+    .art-physics { background:linear-gradient(135deg,#234c66,#28305f); }
+    .art-english { background:linear-gradient(135deg,#63375d,#34345f); }
+    .card-body { padding:19px; }
+    .meta { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:11px; }
+    .tag { color:#a9c6ff; background:rgba(118,169,255,.1); border:1px solid rgba(118,169,255,.18); border-radius:999px; padding:5px 9px; font-size:.7rem; font-weight:800; letter-spacing:.5px; text-transform:uppercase; }
+    .level { color:var(--muted); font-size:.75rem; }
+    .card h3 { margin:0 0 8px; font-size:1.17rem; letter-spacing:-.025em; }
+    .card p { margin:0; min-height:48px; color:var(--muted); line-height:1.6; font-size:.9rem; }
+    .card-bottom { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:19px; padding-top:15px; border-top:1px solid var(--line); }
+    .card-bottom small { color:var(--muted); }
+    .open-link { color:#a9c6ff; font-weight:800; font-size:.88rem; }
+    .open-link:hover { color:white; }
+    .featured {
+      display:grid; grid-template-columns:1.15fr .85fr; overflow:hidden; border:1px solid rgba(117,224,192,.2);
+      border-radius:24px; background:linear-gradient(120deg,rgba(19,65,57,.72),rgba(17,29,48,.94));
+    }
+    .featured-copy { padding:clamp(24px,4vw,42px); }
+    .featured h2 { margin:13px 0 10px; font-size:clamp(1.8rem,4vw,2.7rem); letter-spacing:-.05em; }
+    .featured p { max-width:540px; color:#b2c8c8; line-height:1.7; }
+    .featured-art { min-height:260px; display:grid; place-items:center; background:radial-gradient(circle at 50% 50%,rgba(117,224,192,.24),transparent 58%); }
+    .featured-art span { font-size:6rem; filter:drop-shadow(0 20px 25px rgba(0,0,0,.28)); }
+    .feature-points { display:flex; flex-wrap:wrap; gap:8px; margin:19px 0 23px; }
+    .feature-points span { font-size:.78rem; color:#c4e7df; border:1px solid rgba(117,224,192,.2); background:rgba(117,224,192,.07); padding:7px 10px; border-radius:999px; }
+    .empty { display:none; padding:35px; text-align:center; border:1px dashed var(--line); border-radius:18px; color:var(--muted); }
+    .empty.show { display:block; }
+    footer { border-top:1px solid var(--line); padding:26px 0 38px; color:var(--muted); font-size:.86rem; }
+    footer .foot { display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    @media (max-width:850px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .featured { grid-template-columns:1fr; } .featured-art { min-height:150px; } }
+    @media (max-width:560px) {
+      .wrap { width:min(100% - 28px,1160px); } .nav { height:64px; } .nav-note { display:none; }
+      .hero { padding:65px 0 35px; } .grid { grid-template-columns:1fr; } .search-row { flex-direction:column; }
+      .section-head { align-items:start; flex-direction:column; } .hero-stats { gap:20px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap nav">
+      <a class="brand" href="#" aria-label="StudyVault home"><span class="brand-mark">✦</span> Study<span>Vault</span></a>
+      <div class="nav-note">Your library for learning smarter</div>
+      <a class="btn btn-quiet" href="#library">Explore guides&nbsp; ↓</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">✦ The interactive study guide library</div>
+      <h1>Study smarter.<br><span class="gradient">Understand more.</span></h1>
+      <p class="hero-copy">Find focused study guides, flip through flashcards, test what you know, and build confidence one topic at a time. Your next study session starts here.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#library">Browse study guides <span>→</span></a>
+        <a class="btn btn-quiet" href="#featured">Explore featured guide</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>01</strong><span>Guide published</span></div>
+        <div class="stat"><strong>06</strong><span>Subject areas</span></div>
+        <div class="stat"><strong>∞</strong><span>Ways to practice</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="featured">
+      <div class="section-head">
+        <div><h2>Featured study guide</h2><p>Start with a complete interactive learning experience.</p></div>
+      </div>
+      <article class="featured">
+        <div class="featured-copy">
+          <span class="tag">Featured · Biology</span>
+          <h2>EcoQuest</h2>
+          <p>An interactive biology study guide focused on energy flow, matter cycles, and human impacts on ecosystems. Practice with flashcards, take a quiz, review key concepts, and try a written response.</p>
+          <div class="feature-points"><span>92 flashcards</span><span>Practice test</span><span>Writing coach</span><span>Review sections</span></div>
+          <a class="btn btn-primary" href="EcoQuest_v2.html">Open EcoQuest <span>→</span></a>
+        </div>
+        <div class="featured-art" aria-hidden="true"><span>🌿</span></div>
+      </article>
+    </section>
+
+    <section class="section" id="library">
+      <div class="section-head">
+        <div><h2>Explore the library</h2><p>Search by topic or choose a subject to narrow things down.</p></div>
+      </div>
+      <div class="search-row">
+        <label class="search-box"><span>⌕</span><input id="search" type="search" placeholder="Search study guides, subjects, or topics..." autocomplete="off"></label>
+      </div>
+      <div class="filters" aria-label="Filter by subject">
+        <button class="filter active" data-filter="All">All subjects</button>
+        <button class="filter" data-filter="Biology">Biology</button>
+        <button class="filter" data-filter="Chemistry">Chemistry</button>
+        <button class="filter" data-filter="Physics">Physics</button>
+        <button class="filter" data-filter="Mathematics">Mathematics</button>
+        <button class="filter" data-filter="History">History</button>
+        <button class="filter" data-filter="English">English</button>
+      </div>
+      <div class="grid" id="guideGrid">
+        <article class="card" data-subject="Biology" data-search="ecoquest biology energy flow matter cycles ecosystems flashcards quiz">
+          <div class="card-art art-bio"><span class="art-icon">🌿</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">Biology</span><span class="level">Interactive</span></div>
+            <h3>EcoQuest: Ecosystems</h3>
+            <p>Explore energy, producers and consumers, cycles of matter, and human impacts.</p>
+            <div class="card-bottom"><small>92 flashcards · Practice test</small><a class="open-link" href="EcoQuest_v2.html">Open guide →</a></div>
+          </div>
+        </article>
+        <article class="card" data-subject="Chemistry" data-search="chemistry atoms reactions periodic table">
+          <div class="card-art art-chem"><span class="art-icon">⚗️</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">Chemistry</span><span class="level">Coming soon</span></div>
+            <h3>Chemistry</h3><p>Build a foundation in atoms, elements, reactions, and the periodic table.</p>
+            <div class="card-bottom"><small>New guide planned</small><span class="level">Coming soon</span></div>
+          </div>
+        </article>
+        <article class="card" data-subject="Physics" data-search="physics motion forces energy waves">
+          <div class="card-art art-physics"><span class="art-icon">🪐</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">Physics</span><span class="level">Coming soon</span></div>
+            <h3>Physics</h3><p>Explore motion, forces, energy, waves, and how the physical world works.</p>
+            <div class="card-bottom"><small>New guide planned</small><span class="level">Coming soon</span></div>
+          </div>
+        </article>
+        <article class="card" data-subject="Mathematics" data-search="mathematics algebra geometry equations">
+          <div class="card-art art-math"><span class="art-icon">📐</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">Mathematics</span><span class="level">Coming soon</span></div>
+            <h3>Mathematics</h3><p>Practice equations, algebra, geometry, and problem-solving strategies.</p>
+            <div class="card-bottom"><small>New guide planned</small><span class="level">Coming soon</span></div>
+          </div>
+        </article>
+        <article class="card" data-subject="History" data-search="history civilizations events timelines">
+          <div class="card-art art-history"><span class="art-icon">🏛️</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">History</span><span class="level">Coming soon</span></div>
+            <h3>History</h3><p>Review important events, people, timelines, causes, and historical themes.</p>
+            <div class="card-bottom"><small>New guide planned</small><span class="level">Coming soon</span></div>
+          </div>
+        </article>
+        <article class="card" data-subject="English" data-search="english literature writing grammar reading">
+          <div class="card-art art-english"><span class="art-icon">📖</span></div>
+          <div class="card-body">
+            <div class="meta"><span class="tag">English</span><span class="level">Coming soon</span></div>
+            <h3>English</h3><p>Study literature, reading comprehension, grammar, and writing techniques.</p>
+            <div class="card-bottom"><small>New guide planned</small><span class="level">Coming soon</span></div>
+          </div>
+        </article>
+      </div>
+      <div class="empty" id="empty">No guides match that search. Try another topic or subject.</div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot"><span>✦ StudyVault</span><span>Built to make studying more interactive.</span></div>
+  </footer>
+  <script>
+    const search = document.getElementById('search');
+    const cards = [...document.querySelectorAll('.card')];
+    const filters = [...document.querySelectorAll('.filter')];
+    const empty = document.getElementById('empty');
+    let active = 'All';
+    function updateLibrary() {
+      const term = search.value.trim().toLowerCase();
+      let visible = 0;
+      cards.forEach(card => {
+        const matchesSubject = active === 'All' || card.dataset.subject === active;
+        const matchesSearch = card.dataset.search.includes(term) || card.innerText.toLowerCase().includes(term);
+        const show = matchesSubject && matchesSearch;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      empty.classList.toggle('show', visible === 0);
+    }
+    search.addEventListener('input', updateLibrary);
+    filters.forEach(button => button.addEventListener('click', () => {
+      active = button.dataset.filter;
+      filters.forEach(item => item.classList.toggle('active', item === button));
+      updateLibrary();
+    }));
+  </script>
+</body>
+</html>
