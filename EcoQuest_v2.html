@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoQuest — Biology Study Guide</title>
+<style>
+:root{
+  --bg:#1a2318;--panel:#1f2b1d;--panel2:#263323;
+  --ink:#eef3ea;--muted:#8fa882;
+  --accent:#6dbf67;--accent2:#a8d8a8;
+  --bad:#e07070;--good:#6dbf67;
+  --warn:#e8c97d;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ── STAR CANVAS (particle dots, not stars) ── */
+#starCanvas{
+  position:fixed;inset:0;z-index:-3;pointer-events:none;
+}
+
+body{
+  font-family:Inter,system-ui,Arial,sans-serif;
+  color:var(--ink);min-height:100vh;overflow-x:hidden;
+  background:
+    radial-gradient(ellipse at 15% 0%,  rgba(100,180,80,.14),  transparent 42%),
+    radial-gradient(ellipse at 88% 20%, rgba(80,160,100,.1),   transparent 38%),
+    radial-gradient(ellipse at 50% 95%, rgba(60,140,70,.1),    transparent 50%),
+    linear-gradient(170deg,#1a2318 0%,#1e2a1c 50%,#192117 100%);
+}
+body::before,body::after{
+  content:"";position:fixed;z-index:-1;border-radius:50%;pointer-events:none;
+}
+body::before{
+  width:500px;height:500px;right:-160px;top:5%;
+  background:radial-gradient(circle,rgba(100,190,80,.09),transparent 65%);
+  animation:floatGlow 16s ease-in-out infinite;
+}
+body::after{
+  width:380px;height:380px;left:-140px;bottom:8%;
+  background:radial-gradient(circle,rgba(80,170,100,.08),transparent 65%);
+  animation:floatGlow 20s ease-in-out infinite reverse;
+}
+
+/* ── HEADER ── */
+header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px clamp(16px,4vw,56px);
+  border-bottom:1px solid rgba(109,191,103,.15);
+  position:sticky;top:0;z-index:10;
+  background:rgba(24,32,22,.92);backdrop-filter:blur(16px);
+  box-shadow:0 4px 24px rgba(0,0,0,.35);
+}
+.brand{font-weight:900;font-size:1.1rem;letter-spacing:.5px}
+.brand .eco{color:var(--accent)}.brand .sub{color:var(--muted);font-weight:500;font-size:.9rem}
+.header-right{display:flex;align-items:center;gap:10px}
+.progress-pill{
+  display:flex;align-items:center;gap:8px;
+  background:#1a2d47;border:1px solid #ffffff18;
+  border-radius:999px;padding:6px 14px;font-size:.82rem;
+}
+.progress-pill span{color:var(--accent);font-weight:800}
+
+/* ── BUTTONS ── */
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:11px 18px;font-weight:700;transition:transform .18s,filter .18s,box-shadow .18s,background .18s}
+button:hover{transform:translateY(-2px);filter:brightness(1.1)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:3px solid var(--accent2);outline-offset:3px}
+.btn-primary{background:var(--accent);color:#061a0f;box-shadow:0 6px 18px rgba(102,224,181,.3)}
+.btn-primary:hover{box-shadow:0 10px 26px rgba(102,224,181,.45)}
+.btn-secondary{background:#1f3550;color:var(--ink);border:1px solid #ffffff20}
+.btn-secondary:hover{background:#2a4567}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid #ffffff20}
+.btn-ghost:hover{background:#ffffff0d;color:var(--ink)}
+.btn-back{background:#1a2d47;color:var(--ink);border:1px solid rgba(109,191,103,.3);display:none;font-size:.95rem}
+.btn-back:hover{background:#263d2a;border-color:var(--accent)}
+
+/* ── IN-SECTION BACK BAR ── */
+.section-back-bar{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:28px;padding-bottom:18px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.section-back-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  color:var(--ink);border-radius:12px;
+  padding:10px 18px;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:background .18s,border-color .18s,transform .18s;
+  font-family:inherit;
+}
+.section-back-btn:hover{background:rgba(109,191,103,.15);border-color:var(--accent);transform:translateX(-3px)}
+.section-back-btn::before{content:"←";font-size:1.1rem}
+.section-title-inline{font-size:1rem;color:var(--muted);font-weight:600}
+.btn-green{background:#164b3a;color:var(--good);border:1px solid var(--good)}
+.btn-red{background:#3a1f28;color:var(--bad);border:1px solid var(--bad)}
+
+/* ── LAYOUT ── */
+main{width:min(1080px,93vw);margin:40px auto 80px}
+.hidden{display:none!important}
+.eyebrow{color:var(--accent);font-weight:800;letter-spacing:1.8px;text-transform:uppercase;font-size:.75rem;margin-bottom:8px}
+h1{font-size:clamp(2rem,5.5vw,4rem);line-height:1.05}
+h2{font-size:clamp(1.4rem,3.5vw,2.2rem);line-height:1.15}
+h3{font-size:1.05rem;font-weight:700}
+p{color:var(--muted);line-height:1.65}
+
+/* ══════════════════════════════════════
+   HOME / LOBBY  — Aurora Forest theme
+   ══════════════════════════════════════ */
+
+/* Animated canvas background for lobby only */
+#lobbyCanvas{
+  position:fixed;inset:0;z-index:-2;
+  pointer-events:none;
+  opacity:0;transition:opacity .6s;
+}
+#lobbyCanvas.visible{opacity:1}
+
+/* Full-bleed lobby wrapper */
+.lobby-wrap{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  position:relative;
+}
+
+/* Floating orbs */
+.orb{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:-1;
+  filter:blur(80px);opacity:0;transition:opacity .8s;
+}
+.orb.visible{opacity:1}
+.orb-1{width:600px;height:600px;top:-120px;left:-180px;background:radial-gradient(circle,rgba(100,180,80,.14),transparent 65%)}
+.orb-2{width:500px;height:500px;bottom:-100px;right:-150px;background:radial-gradient(circle,rgba(80,160,100,.12),transparent 65%)}
+.orb-3{width:300px;height:300px;top:40%;left:55%;background:radial-gradient(circle,rgba(120,190,90,.08),transparent 65%)}
+
+/* ── HERO ── */
+.lobby-hero{
+  position:relative;isolation:isolate;
+  padding:clamp(60px,10vh,110px) 0 clamp(40px,6vh,70px);
+  overflow:hidden;
+}
+.lobby-hero::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:
+    radial-gradient(ellipse at 15% 50%,rgba(30,200,100,.09),transparent 45%),
+    radial-gradient(ellipse at 85% 30%,rgba(10,210,160,.09),transparent 40%);
+}
+
+/* Animated title words */
+.lobby-eyebrow{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(109,191,103,.12);
+  border:1px solid rgba(109,191,103,.3);
+  border-radius:999px;padding:6px 16px;
+  color:var(--accent);font-size:.78rem;font-weight:800;
+  letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:22px;
+  animation:fadeSlideUp .6s .1s both;
+}
+.lobby-eyebrow::before{content:"🌿";margin-right:4px}
+
+.lobby-title{
+  font-size:clamp(2.8rem,8vw,6rem);
+  line-height:1.0;font-weight:900;
+  animation:fadeSlideUp .7s .2s both;
+  letter-spacing:-1.5px;
+}
+.lobby-title .line1{display:block;color:var(--ink)}
+.lobby-title .line2{
+  display:block;
+  background:linear-gradient(100deg,#8ed68e,#b5e8b0 50%,#d4f0c8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.lobby-sub{
+  max-width:580px;font-size:1.1rem;line-height:1.7;
+  color:var(--muted);margin:20px 0 36px;
+  animation:fadeSlideUp .7s .35s both;
+}
+
+.lobby-cta{
+  display:flex;gap:12px;flex-wrap:wrap;
+  animation:fadeSlideUp .7s .45s both;
+}
+.cta-main{
+  background:linear-gradient(135deg,#4a9e44,#2d7a28);
+  color:#e8f5e5;padding:14px 30px;border-radius:14px;
+  font-size:1rem;font-weight:800;
+  box-shadow:0 8px 28px rgba(74,158,68,.35),0 0 0 1px rgba(109,191,103,.2);
+  letter-spacing:.3px;
+}
+.cta-main:hover{box-shadow:0 14px 36px rgba(74,158,68,.5);transform:translateY(-3px)!important}
+.cta-secondary{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  color:var(--ink);padding:14px 26px;border-radius:14px;
+  font-size:1rem;font-weight:700;
+  backdrop-filter:blur(8px);
+}
+.cta-secondary:hover{background:rgba(255,255,255,.1)}
+
+/* Stats bar */
+.stats-bar{
+  display:flex;gap:28px;flex-wrap:wrap;
+  margin-top:48px;padding-top:32px;
+  border-top:1px solid rgba(255,255,255,.08);
+  animation:fadeSlideUp .7s .55s both;
+}
+.stat{display:flex;flex-direction:column;gap:4px}
+.stat-num{font-size:1.8rem;font-weight:900;color:var(--ink);line-height:1}
+.stat-num span{
+  background:linear-gradient(90deg,#8ed68e,#c5e8b0);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.stat-label{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1.4px;font-weight:700}
+
+/* ── MODE CARDS ── */
+.modes-section{margin-top:72px;animation:fadeSlideUp .7s .3s both}
+.modes-label{
+  display:flex;align-items:center;gap:14px;margin-bottom:24px;
+}
+.modes-label h2{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;letter-spacing:-.5px}
+.modes-label::after{
+  content:"";flex:1;height:1px;
+  background:linear-gradient(90deg,rgba(255,255,255,.12),transparent);
+}
+
+.mode-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.mode-card{
+  position:relative;isolation:isolate;overflow:hidden;
+  border-radius:24px;padding:28px 26px;
+  cursor:pointer;border:1px solid rgba(255,255,255,.1);
+  text-align:left;color:var(--ink);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s;
+  min-height:175px;
+}
+.mode-card::after{
+  content:"";position:absolute;inset:0;z-index:-1;
+  opacity:0;transition:opacity .3s;
+  border-radius:24px;
+}
+/* individual card colors */
+.mc-flash{background:linear-gradient(135deg,#0d2a1e 0%,#0d1f2f 100%)}
+.mc-flash::after{background:linear-gradient(135deg,#1aff9c12,#0d6e4a22)}
+.mc-flash:hover{border-color:rgba(102,224,181,.4);box-shadow:0 24px 56px rgba(0,0,0,.4),inset 0 1px 0 rgba(102,224,181,.15)}
+.mc-flash:hover::after{opacity:1}
+
+.mc-quiz{background:linear-gradient(135deg,#160c2a 0%,#1a1030 100%)}
+.mc-quiz::after{background:linear-gradient(135deg,#a78bfa15,#6366f122)}
+.mc-quiz:hover{border-color:rgba(167,139,250,.4);box-shadow:0 24px 56px rgba(0,0,0,.4),inset 0 1px 0 rgba(167,139,250,.15)}
+.mc-quiz:hover::after{opacity:1}
+.mc-quiz .mode-icon-bg{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.2)}
+.mc-quiz .mode-num{color:#a78bfa}
+
+.mc-review{background:linear-gradient(135deg,#0d1a2a 0%,#111f30 100%)}
+.mc-review::after{background:linear-gradient(135deg,#8db7ff14,#3b82f622)}
+.mc-review:hover{border-color:rgba(141,183,255,.4);box-shadow:0 24px 56px rgba(0,0,0,.4),inset 0 1px 0 rgba(141,183,255,.15)}
+.mc-review:hover::after{opacity:1}
+.mc-review .mode-icon-bg{background:rgba(141,183,255,.12);border-color:rgba(141,183,255,.2)}
+.mc-review .mode-num{color:#8db7ff}
+
+.mc-write{background:linear-gradient(135deg,#1a0d1a 0%,#200e28 100%)}
+.mc-write::after{background:linear-gradient(135deg,#f472b614,#db277722)}
+.mc-write:hover{border-color:rgba(244,114,182,.4);box-shadow:0 24px 56px rgba(0,0,0,.4),inset 0 1px 0 rgba(244,114,182,.15)}
+.mc-write:hover::after{opacity:1}
+.mc-write .mode-icon-bg{background:rgba(244,114,182,.12);border-color:rgba(244,114,182,.2)}
+.mc-write .mode-num{color:#f472b6}
+
+.mode-top{display:flex;justify-content:space-between;align-items:flex-start}
+.mode-icon-bg{
+  width:50px;height:50px;border-radius:14px;
+  display:grid;place-items:center;font-size:1.6rem;
+  background:rgba(102,224,181,.12);border:1px solid rgba(102,224,181,.2);
+  transition:transform .3s;
+}
+.mode-card:hover .mode-icon-bg{transform:scale(1.08) rotate(-6deg)}
+.mode-num{
+  font-size:.75rem;font-weight:800;
+  color:var(--accent);letter-spacing:1.4px;
+  text-transform:uppercase;padding-top:4px;
+}
+.mode-card h3{font-size:1.25rem;font-weight:800;margin:16px 0 8px;letter-spacing:-.3px}
+.mode-card p{font-size:.9rem;color:var(--muted);line-height:1.6;margin:0}
+/* shine sweep on hover */
+.mode-card::before{
+  content:"";position:absolute;
+  top:0;left:-80%;width:60%;height:100%;z-index:1;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.04),transparent);
+  transform:skewX(-15deg);transition:left .6s ease;pointer-events:none;
+}
+.mode-card:hover::before{left:140%}
+
+/* ── FEATURE LIST ── */
+.features-section{
+  margin-top:72px;
+  padding:40px;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:28px;
+  backdrop-filter:blur(10px);
+  animation:fadeSlideUp .7s .4s both;
+}
+.features-section .fs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+.features-section .fs-head h2{font-size:clamp(1.3rem,3vw,2rem);font-weight:900;letter-spacing:-.3px}
+.features-section .fs-head p{color:var(--muted);font-size:.9rem;max-width:380px;text-align:right}
+.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.feature-card{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px 18px;border-radius:16px;
+  border:1px solid rgba(255,255,255,.07);
+  background:rgba(255,255,255,.03);
+  transition:background .22s,border-color .22s,transform .22s;
+}
+.feature-card:hover{background:rgba(255,255,255,.06);border-color:rgba(102,224,181,.2);transform:translateY(-3px)}
+.feature-card-icon{
+  flex:0 0 38px;width:38px;height:38px;
+  display:grid;place-items:center;
+  border-radius:11px;background:rgba(102,224,181,.1);font-size:1.2rem;
+}
+.feature-card b{display:block;color:#edf2ff;line-height:1.35;font-size:.93rem;font-weight:700}
+.feature-card small{display:block;color:#8899b0;line-height:1.5;margin-top:5px;font-size:.82rem}
+
+/* side botanical decorations */
+.side-deco{
+  position:fixed;top:0;bottom:0;width:clamp(60px,8vw,110px);
+  pointer-events:none;z-index:0;overflow:hidden;
+  opacity:.45;
+}
+.side-deco-left{left:0}
+.side-deco-right{right:0;transform:scaleX(-1)}
+.side-deco svg{position:absolute;width:100%}
+
+/* scrolling ticker at bottom of lobby */
+.ticker-wrap{
+  margin-top:64px;padding:18px 0;
+  border-top:1px solid rgba(255,255,255,.07);
+  overflow:hidden;position:relative;
+}
+.ticker-wrap::before,.ticker-wrap::after{
+  content:"";position:absolute;top:0;width:120px;height:100%;z-index:1;
+}
+.ticker-wrap::before{left:0;background:linear-gradient(90deg,#07101e,transparent)}
+.ticker-wrap::after{right:0;background:linear-gradient(-90deg,#07101e,transparent)}
+.ticker-track{
+  display:flex;gap:40px;width:max-content;
+  animation:ticker 30s linear infinite;
+}
+.ticker-item{
+  display:flex;align-items:center;gap:10px;
+  white-space:nowrap;color:var(--muted);font-size:.85rem;font-weight:600;
+}
+.ticker-item span{color:var(--accent)}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── SHARED SECTION HEADER ── */
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.prog-bar-wrap{height:7px;background:#ffffff14;border-radius:9px;overflow:hidden;margin:0 0 28px}
+.prog-bar{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));box-shadow:0 0 14px rgba(183,148,255,.6);transition:width .3s}
+
+/* ── FLASHCARDS ── */
+.mastery-strip{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  background:#111e30;border:1px solid #ffffff18;
+  border-radius:14px;padding:12px 18px;margin-bottom:20px;
+  font-size:.9rem;
+}
+.mastery-strip .num{color:var(--accent);font-weight:800;font-size:1.1rem}
+.mastery-strip .bar-bg{flex:1;min-width:80px;height:6px;background:#ffffff14;border-radius:9px;overflow:hidden}
+.mastery-strip .bar-fill{height:100%;background:var(--good);transition:width .4s;border-radius:9px}
+
+.flash-wrap{max-width:820px;margin:0 auto}
+.flashcard{
+  position:relative;overflow:hidden;isolation:isolate;
+  min-height:400px;border-radius:26px;
+  background:
+    radial-gradient(circle at 10% 10%,rgba(102,224,181,.14),transparent 35%),
+    radial-gradient(circle at 90% 85%,rgba(141,183,255,.13),transparent 35%),
+    linear-gradient(145deg,#1f3a5a,#132336);
+  border:1px solid #ffffff22;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:clamp(28px,6vw,64px);
+  cursor:pointer;box-shadow:0 22px 65px rgba(0,0,0,.3);
+  transition:border-color .3s,box-shadow .3s;
+}
+.flashcard::before{
+  content:"";position:absolute;inset:-55%;z-index:-1;
+  background:conic-gradient(from 0deg,transparent,rgba(102,224,181,.08),transparent,rgba(141,183,255,.08),transparent);
+  animation:slowSpin 24s linear infinite;
+}
+.flashcard::after{content:"✦";position:absolute;right:28px;top:18px;color:rgba(102,224,181,.5);font-size:1.8rem;animation:twinkle 3.5s ease-in-out infinite}
+.flashcard:hover{border-color:rgba(102,224,181,.5);box-shadow:0 28px 80px rgba(0,0,0,.4),0 0 40px rgba(102,224,181,.08)}
+.card-label{color:var(--accent);font-size:.8rem;text-transform:uppercase;letter-spacing:1.8px;font-weight:800}
+.card-q{font-size:clamp(1.6rem,4vw,3rem);line-height:1.15;margin:20px 0;max-width:680px}
+.card-a{font-size:clamp(1.05rem,2.5vw,1.4rem);line-height:1.6;color:#ddeeff;max-width:640px;animation:popIn .3s both}
+.card-tip{color:var(--accent);font-size:.95rem;margin-top:18px;font-style:italic;animation:popIn .4s both}
+.card-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.card-rate{display:flex;justify-content:center;gap:10px;margin-top:12px}
+.card-counter{text-align:center;color:var(--muted);font-size:.88rem;margin-top:8px}
+.mastered-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#164b3a;border:1px solid var(--good);
+  border-radius:999px;padding:3px 10px;
+  font-size:.78rem;color:var(--good);font-weight:800;
+  vertical-align:middle;margin-left:8px;
+}
+
+/* ── QUIZ ── */
+.quizbox{
+  max-width:840px;margin:0 auto;
+  background:#111e30;border:1px solid #ffffff18;
+  border-radius:22px;padding:clamp(20px,4vw,38px);
+  box-shadow:0 14px 42px rgba(0,0,0,.2);
+}
+.quiz-topic{color:var(--accent2);font-size:.8rem;text-transform:uppercase;letter-spacing:1.6px;font-weight:800;margin-bottom:10px}
+.quiz-q{font-size:clamp(1.1rem,2.6vw,1.75rem);line-height:1.4;margin-bottom:22px}
+.options-grid{display:grid;gap:10px}
+.opt{
+  width:100%;text-align:left;
+  background:#1a2f47;color:var(--ink);
+  border:1px solid #ffffff18;
+  padding:15px 18px;border-radius:14px;font-weight:600;
+  transition:transform .15s,border-color .15s,background .15s;
+}
+.opt:not(:disabled):hover{transform:translateX(5px);border-color:rgba(141,183,255,.5);background:#22395a}
+.opt:disabled{cursor:default}
+.opt.correct{background:#143e2e;border-color:var(--good)}
+.opt.wrong{background:#3e1a24;border-color:var(--bad)}
+.feedback-box{
+  margin-top:18px;border-radius:16px;padding:18px 20px;
+  background:#172840;line-height:1.6;
+  animation:riseIn .3s both;
+}
+.feedback-box.good{border-left:5px solid var(--good)}
+.feedback-box.bad{border-left:5px solid var(--bad)}
+.feedback-box h3{margin-bottom:8px;font-size:1rem}
+.feedback-box p{color:#d8e8f8;margin:5px 0;font-size:.94rem}
+.wrong-reason{color:#ffc8c8!important}
+.review-ref{color:var(--accent2)!important;font-size:.88rem!important;margin-top:10px!important}
+.quiz-footer{display:flex;justify-content:flex-end;margin-top:14px}
+.score-big{font-size:3rem;font-weight:900;color:var(--accent);display:block;margin:12px 0 4px}
+
+/* ── REVIEW SECTION ── */
+.review-topic{
+  margin-bottom:28px;
+  background:#111e30;border:1px solid #ffffff18;
+  border-radius:18px;overflow:hidden;
+}
+.review-topic-header{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px;cursor:pointer;
+  background:#14233a;border-bottom:1px solid #ffffff12;
+  transition:background .2s;user-select:none;
+}
+.review-topic-header:hover{background:#192b46}
+.review-topic-header .rtag{
+  background:var(--accent);color:#061a0f;
+  font-size:.72rem;font-weight:800;
+  border-radius:999px;padding:3px 10px;
+  white-space:nowrap;
+}
+.review-topic-header h3{flex:1;font-size:1rem;color:var(--ink)}
+.review-topic-header .chevron{color:var(--muted);font-size:.85rem;transition:transform .25s}
+.review-topic-header.open .chevron{transform:rotate(180deg)}
+.review-topic-body{display:none;padding:18px 20px 20px}
+.review-topic-body.open{display:block;animation:riseIn .25s both}
+.review-topic-body ul{padding-left:1.3em;list-style:disc}
+.review-topic-body li{color:var(--muted);line-height:1.72;padding:2px 0;font-size:.96rem}
+.review-topic-body li strong{color:#e8f2ff}
+.review-hint{
+  background:#14243a;border:1px solid #ffffff14;
+  border-radius:14px;padding:14px 18px;
+  color:var(--muted);font-size:.9rem;line-height:1.6;margin-top:18px;
+}
+
+/* ── WRITING ── */
+.writing-prompt{
+  background:#111e30;border:1px solid #ffffff18;
+  border-radius:16px;padding:18px 20px;
+  margin-bottom:20px;
+}
+.writing-prompt b{color:var(--ink);display:block;margin-bottom:6px}
+textarea{
+  width:100%;padding:16px;border-radius:14px;
+  border:1px solid #ffffff28;background:#111e30;
+  color:var(--ink);font:inherit;line-height:1.6;
+  resize:vertical;min-height:160px;outline:none;
+  transition:border-color .2s;
+}
+textarea:focus{border-color:rgba(102,224,181,.5)}
+.writing-controls{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.checklist-result{
+  margin-top:18px;border-radius:16px;padding:18px 20px;
+  background:#172840;animation:riseIn .3s both;
+}
+.checklist-result.good{border-left:5px solid var(--good)}
+.checklist-result.bad{border-left:5px solid var(--bad)}
+.checklist-result h3{margin-bottom:10px}
+.checklist-result ul{padding-left:1.3em;margin:8px 0}
+.checklist-result li{line-height:1.65;font-size:.93rem;padding:2px 0}
+.check-pass{color:var(--good)}.check-fail{color:#ffb3b3}
+
+/* ── ANIMATIONS ── */
+@keyframes riseIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes artFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
+@keyframes floatGlow{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(16px,-20px,0) scale(1.1)}}
+@keyframes slowSpin{to{transform:rotate(360deg)}}
+@keyframes twinkle{0%,100%{opacity:.3;transform:scale(.8) rotate(0)}50%{opacity:1;transform:scale(1.15) rotate(22deg)}}
+section:not(.hidden){animation:riseIn .4s both}
+
+/* ── RESPONSIVE ── */
+@media(max-width:860px){.feature-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){
+  header{padding:12px 16px}
+  .hero-art{position:relative;display:block;width:160px;margin:20px auto 0;right:auto;top:auto}
+  .feature-grid{grid-template-columns:1fr}
+  .section-header{flex-direction:column;align-items:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="eco">ECO</span>QUEST <span class="sub">/ biology study guide</span></div>
+  <div class="header-right">
+    <div class="progress-pill" id="masteryPill" style="display:none">
+      Mastered <span id="pillNum">0</span> / 92
+    </div>
+    <button class="btn-back" id="backBtn" type="button">← Back</button>
+  </div>
+</header>
+
+<main>
+
+<canvas id="starCanvas" aria-hidden="true"></canvas>
+<!-- side botanical / animal decorations -->
+<div class="side-deco side-deco-left" aria-hidden="true">
+  <svg viewBox="0 0 110 900" style="top:0;height:900px" xmlns="http://www.w3.org/2000/svg">
+    <path d="M55 900 Q52 700 55 500 Q58 300 54 80" stroke="#6dbf67" stroke-width="2.5" fill="none" opacity=".7"/>
+    <path d="M54 820 Q20 790 10 760 Q40 775 54 800" fill="#4a9e44" opacity=".8"/>
+    <path d="M54 740 Q15 710 8 675 Q38 695 54 720" fill="#5aad52" opacity=".75"/>
+    <path d="M54 650 Q18 622 12 590 Q42 608 54 632" fill="#4a9e44" opacity=".8"/>
+    <path d="M55 560 Q22 535 16 505 Q44 520 55 545" fill="#5aad52" opacity=".7"/>
+    <path d="M55 470 Q25 445 20 415 Q46 432 55 458" fill="#4a9e44" opacity=".75"/>
+    <path d="M55 380 Q28 356 24 326 Q48 342 55 368" fill="#5aad52" opacity=".7"/>
+    <path d="M54 290 Q30 268 27 240 Q50 254 54 278" fill="#4a9e44" opacity=".8"/>
+    <path d="M54 210 Q34 190 32 165 Q52 177 54 198" fill="#5aad52" opacity=".7"/>
+    <path d="M55 140 Q38 122 37 100 Q53 112 55 130" fill="#4a9e44" opacity=".75"/>
+    <path d="M56 790 Q88 762 97 732 Q68 748 56 770" fill="#6dbf67" opacity=".7"/>
+    <path d="M56 700 Q90 672 100 642 Q70 658 56 680" fill="#78c870" opacity=".65"/>
+    <path d="M56 610 Q88 585 96 557 Q68 572 56 592" fill="#6dbf67" opacity=".7"/>
+    <path d="M56 520 Q86 496 94 470 Q68 484 56 502" fill="#78c870" opacity=".65"/>
+    <path d="M56 430 Q84 408 90 383 Q66 396 56 414" fill="#6dbf67" opacity=".7"/>
+    <path d="M56 345 Q82 324 88 300 Q66 312 56 330" fill="#78c870" opacity=".65"/>
+    <path d="M55 260 Q80 241 85 218 Q64 229 55 246" fill="#6dbf67" opacity=".7"/>
+    <path d="M55 182 Q78 165 82 144 Q63 154 55 170" fill="#78c870" opacity=".6"/>
+    <!-- butterfly -->
+    <g transform="translate(30,170) rotate(-15)">
+      <ellipse cx="0" cy="-8" rx="10" ry="6" fill="#a8d8a8" opacity=".7"/>
+      <ellipse cx="0" cy="8" rx="7" ry="4" fill="#8ed68e" opacity=".6"/>
+      <line x1="0" y1="-14" x2="0" y2="14" stroke="#4a9e44" stroke-width="1.2"/>
+    </g>
+    <!-- bird -->
+    <g transform="translate(65,320)" opacity=".55">
+      <path d="M0 0 Q-8-5-14-2 Q-8 2 0 0 Q8-5 14-2 Q8 2 0 0Z" fill="#6dbf67"/>
+    </g>
+  </svg>
+</div>
+<div class="side-deco side-deco-right" aria-hidden="true">
+  <svg viewBox="0 0 110 900" style="top:0;height:900px" xmlns="http://www.w3.org/2000/svg">
+    <path d="M55 900 Q52 700 55 500 Q58 300 54 80" stroke="#6dbf67" stroke-width="2.5" fill="none" opacity=".7"/>
+    <path d="M54 820 Q20 790 10 760 Q40 775 54 800" fill="#4a9e44" opacity=".8"/>
+    <path d="M54 740 Q15 710 8 675 Q38 695 54 720" fill="#5aad52" opacity=".75"/>
+    <path d="M54 650 Q18 622 12 590 Q42 608 54 632" fill="#4a9e44" opacity=".8"/>
+    <path d="M55 560 Q22 535 16 505 Q44 520 55 545" fill="#5aad52" opacity=".7"/>
+    <path d="M55 470 Q25 445 20 415 Q46 432 55 458" fill="#4a9e44" opacity=".75"/>
+    <path d="M55 380 Q28 356 24 326 Q48 342 55 368" fill="#5aad52" opacity=".7"/>
+    <path d="M54 290 Q30 268 27 240 Q50 254 54 278" fill="#4a9e44" opacity=".8"/>
+    <path d="M56 790 Q88 762 97 732 Q68 748 56 770" fill="#6dbf67" opacity=".7"/>
+    <path d="M56 700 Q90 672 100 642 Q70 658 56 680" fill="#78c870" opacity=".65"/>
+    <path d="M56 610 Q88 585 96 557 Q68 572 56 592" fill="#6dbf67" opacity=".7"/>
+    <path d="M56 520 Q86 496 94 470 Q68 484 56 502" fill="#78c870" opacity=".65"/>
+    <path d="M56 430 Q84 408 90 383 Q66 396 56 414" fill="#6dbf67" opacity=".7"/>
+    <!-- frog -->
+    <g transform="translate(55,490)" opacity=".6">
+      <ellipse cx="0" cy="0" rx="9" ry="7" fill="#6dbf67"/>
+      <circle cx="-5" cy="-5" r="4" fill="#5aad52"/>
+      <circle cx="5" cy="-5" r="4" fill="#5aad52"/>
+      <circle cx="-6" cy="-6" r="1.5" fill="#1a2318"/>
+      <circle cx="6" cy="-6" r="1.5" fill="#1a2318"/>
+    </g>
+    <!-- leaf cluster -->
+    <g transform="translate(45,100)" opacity=".65">
+      <path d="M10 30 Q-10 10 0 0 Q15 5 10 30Z" fill="#4a9e44"/>
+      <path d="M10 30 Q30 8 25-2 Q12 8 10 30Z" fill="#6dbf67"/>
+      <path d="M10 30 Q5 5 15-5 Q18 10 10 30Z" fill="#5aad52"/>
+    </g>
+  </svg>
+</div>
+
+<!-- floating orbs (shown only on home) -->
+<div class="orb orb-1" id="orb1"></div>
+<div class="orb orb-2" id="orb2"></div>
+<div class="orb orb-3" id="orb3"></div>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<section id="home">
+<div class="lobby-wrap">
+
+  <!-- HERO -->
+  <div class="lobby-hero">
+    <div class="lobby-eyebrow">Biology test practice</div>
+    <h1 class="lobby-title">
+      <span class="line1">Don't just memorize.</span>
+      <span class="line2">Actually understand it.</span>
+    </h1>
+    <p class="lobby-sub">92 flashcards · shuffled practice tests · explains why you're wrong · tracks your mastery. Everything your biology test needs, one file, works offline.</p>
+    <div class="lobby-cta">
+      <button class="cta-main" id="startCards" type="button">🧠 Start flashcards</button>
+      <button class="cta-secondary" id="startQuiz" type="button">🎯 Take a practice test</button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-num"><span>92</span></div>
+        <div class="stat-label">Flashcards</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num"><span>20</span></div>
+        <div class="stat-label">Quiz questions</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num"><span>5</span></div>
+        <div class="stat-label">Test sections</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num"><span>∞</span></div>
+        <div class="stat-label">Retakes</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE CARDS -->
+  <div class="modes-section">
+    <div class="modes-label">
+      <h2>Choose your mode</h2>
+    </div>
+    <div class="mode-cards">
+
+      <button class="mode-card mc-flash" id="startCardsAlt" type="button">
+        <div class="mode-top">
+          <div class="mode-icon-bg">🧠</div>
+          <span class="mode-num">92 cards</span>
+        </div>
+        <h3>Flashcards</h3>
+        <p>Flip through every concept with memory tips. Mark cards as mastered to track your progress.</p>
+      </button>
+
+      <button class="mode-card mc-quiz" id="startQuizAlt" type="button">
+        <div class="mode-top">
+          <div class="mode-icon-bg">🎯</div>
+          <span class="mode-num">20 questions</span>
+        </div>
+        <h3>Practice test</h3>
+        <p>Shuffled every time. Tells you exactly why each wrong answer doesn't fit — not just what's correct.</p>
+      </button>
+
+      <button class="mode-card mc-review" id="startReview" type="button">
+        <div class="mode-top">
+          <div class="mode-icon-bg">📚</div>
+          <span class="mode-num">5 sections</span>
+        </div>
+        <h3>What to know</h3>
+        <p>Every bullet point from the teacher's test slide, organized by section. Expandable.</p>
+      </button>
+
+      <button class="mode-card mc-write" id="startWriting" type="button">
+        <div class="mode-top">
+          <div class="mode-icon-bg">✍️</div>
+          <span class="mode-num">5 key ideas</span>
+        </div>
+        <h3>Writing coach</h3>
+        <p>Write a free-response explanation and see which key ideas you included or missed.</p>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- FEATURES PANEL -->
+  <div class="features-section">
+    <div class="fs-head">
+      <h2>Everything in one place.</h2>
+      <p>No more prompting AI over and over. All your study tools in one file, offline.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-card-icon">🧠</div>
+        <div><b>92 flashcards covering everything you need to know</b><small>Every concept from the teacher's test list, with a memory tip on every card.</small></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">🎯</div>
+        <div><b>Realistic practice tests with unlimited retakes</b><small>Shuffled each time so you're never just memorizing the order.</small></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">💡</div>
+        <div><b>Explains why your answer is wrong, not just the correct answer</b><small>Understand the reasoning so you don't repeat the same mistake.</small></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">📚</div>
+        <div><b>Tells you exactly which PowerPoint slides to review</b><small>Every quiz question links to the matching test-list section.</small></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">✍️</div>
+        <div><b>Written-response feedback</b><small>See which key ideas your answer included and which ones are missing.</small></div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-card-icon">🌎</div>
+        <div><b>Everything in one place, so you don't have to keep prompting AI!</b><small>Flashcards, tests, explanations, review, writing practice — one file, offline.</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker-track">
+      <div class="ticker-item"><span>4.1</span> Energy, Producers &amp; Consumers</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>4.2</span> Energy Flow in Ecosystems</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>4.3</span> Cycles of Matter</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>7.2</span> Human Impacts on Ecosystems</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>Skills</span> Interpreting Models &amp; Applying Concepts</div>
+      <div class="ticker-item">✦</div>
+      <!-- duplicate for seamless loop -->
+      <div class="ticker-item"><span>4.1</span> Energy, Producers &amp; Consumers</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>4.2</span> Energy Flow in Ecosystems</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>4.3</span> Cycles of Matter</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>7.2</span> Human Impacts on Ecosystems</div>
+      <div class="ticker-item">✦</div>
+      <div class="ticker-item"><span>Skills</span> Interpreting Models &amp; Applying Concepts</div>
+      <div class="ticker-item">✦</div>
+    </div>
+  </div>
+
+</div><!-- /.lobby-wrap -->
+</section>
+
+<!-- ═══════════════ FLASHCARDS ═══════════════ -->
+<section id="cards" class="hidden">
+  <div class="section-back-bar">
+    <button class="section-back-btn" data-back type="button">Back to home</button>
+    <span class="section-title-inline">Flashcards</span>
+  </div>
+  <div class="section-header">
+    <div>
+      <div class="eyebrow">Main study mode</div>
+      <h2>Flashcards</h2>
+    </div>
+    <div id="cardCounter" style="color:var(--muted);font-size:.9rem;text-align:right"></div>
+  </div>
+
+  <div class="mastery-strip" id="masteryStrip">
+    <span style="color:var(--muted)">Mastered:</span>
+    <span class="num" id="masteryNum">0</span>
+    <span style="color:var(--muted)">/ 92</span>
+    <div class="bar-bg"><div class="bar-fill" id="masteryFill" style="width:0%"></div></div>
+    <span id="masteryMsg" style="color:var(--muted);font-size:.82rem">Keep going!</span>
+  </div>
+
+  <div class="prog-bar-wrap"><div class="prog-bar" id="cardProg"></div></div>
+
+  <div class="flash-wrap">
+    <div class="flashcard" id="flashcard" role="button" tabindex="0" aria-label="Flip flashcard">
+      <div class="card-label" id="cardLabel">Question · tap to flip</div>
+      <div class="card-q" id="cardQ"></div>
+      <div class="card-a hidden" id="cardA"></div>
+      <div class="card-tip hidden" id="cardTip"></div>
+    </div>
+
+    <div class="card-rate">
+      <button class="btn-green" id="btnGot" type="button">✓ Got it</button>
+      <button class="btn-red" id="btnLearning" type="button">✗ Still learning</button>
+    </div>
+
+    <div class="card-controls">
+      <button class="btn-secondary" id="btnPrev" type="button">← Prev</button>
+      <button class="btn-primary" id="btnFlip" type="button">Flip card</button>
+      <button class="btn-secondary" id="btnNext" type="button">Next →</button>
+    </div>
+    <div class="card-controls">
+      <button class="btn-ghost" id="btnUnmastered" type="button">Show only unmastered</button>
+      <button class="btn-ghost" id="btnShuffle" type="button">🔀 Shuffle</button>
+      <button class="btn-ghost" id="btnReset" type="button">Reset mastery</button>
+    </div>
+    <div class="card-counter">Say the answer out loud before flipping — it helps.</div>
+  </div>
+</section>
+
+<!-- ═══════════════ QUIZ ═══════════════ -->
+<section id="quiz" class="hidden">
+  <div class="section-back-bar">
+    <button class="section-back-btn" data-back type="button">Back to home</button>
+    <span class="section-title-inline">Practice test</span>
+  </div>
+  <div class="section-header">
+    <div>
+      <div class="eyebrow">Practice + explanations</div>
+      <h2>Learn from your mistakes</h2>
+    </div>
+    <div id="quizCounter" style="color:var(--muted);font-size:.9rem;text-align:right"></div>
+  </div>
+  <div class="prog-bar-wrap"><div class="prog-bar" id="quizProg"></div></div>
+  <div class="quizbox">
+    <div class="quiz-topic" id="quizTopic"></div>
+    <div class="quiz-q" id="quizQ"></div>
+    <div class="options-grid" id="optionsGrid"></div>
+    <div class="feedback-box hidden" id="feedbackBox" aria-live="polite"></div>
+    <div class="quiz-footer">
+      <button class="btn-primary hidden" id="btnNextQ" type="button">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ REVIEW ═══════════════ -->
+<section id="review" class="hidden">
+  <div class="section-back-bar">
+    <button class="section-back-btn" data-back type="button">Back to home</button>
+    <span class="section-title-inline">What to know</span>
+  </div>
+  <div class="eyebrow">Teacher's test slide</div>
+  <h2 style="margin-bottom:8px">What to know for the test</h2>
+  <p style="margin-bottom:30px">Every bullet point from the slide, organized by section. Click a section to expand it.</p>
+
+  <div class="review-topic">
+    <div class="review-topic-header" data-topic="t1">
+      <span class="rtag">4.1</span>
+      <h3>Energy, Producers, and Consumers</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="review-topic-body" id="t1">
+      <ul>
+        <li>Differentiate between <strong>autotrophs</strong> and <strong>heterotrophs</strong>.</li>
+        <li>Compare <strong>photosynthesis</strong> and <strong>chemosynthesis</strong>.</li>
+        <li>Identify different types of consumers: <strong>herbivores, carnivores, omnivores, scavengers, detritivores,</strong> and <strong>decomposers</strong>.</li>
+        <li>Explain the difference between <strong>decomposers</strong> and <strong>detritivores</strong> and their roles in recycling matter.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="review-topic">
+    <div class="review-topic-header" data-topic="t2">
+      <span class="rtag">4.2</span>
+      <h3>Energy Flow in Ecosystems</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="review-topic-body" id="t2">
+      <ul>
+        <li>Differentiate between <strong>food chains</strong> and <strong>food webs</strong>.</li>
+        <li>Identify organisms at different <strong>trophic levels</strong> within a food web.</li>
+        <li>Interpret the direction of <strong>arrows</strong> in a food web.</li>
+        <li>Predict how changes in one population affect other populations within a food web.</li>
+        <li>Interpret the three ecological pyramids: <strong>energy, biomass,</strong> and <strong>numbers</strong>.</li>
+        <li>Apply the <strong>10% rule</strong> to calculate energy available at different trophic levels.</li>
+        <li>Explain what happens to energy and matter that are <strong>not transferred</strong> to the next trophic level.</li>
+        <li>Explain why <strong>matter cycles</strong> while <strong>energy flows</strong> through an ecosystem.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="review-topic">
+    <div class="review-topic-header" data-topic="t3">
+      <span class="rtag">4.3</span>
+      <h3>Cycles of Matter</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="review-topic-body" id="t3">
+      <ul>
+        <li>Explain how matter is conserved and recycled through <strong>biogeochemical cycles</strong>.</li>
+        <li><strong>Carbon Cycle:</strong> Explain how carbon moves through photosynthesis, cellular respiration, consumption, and decomposition.</li>
+        <li><strong>Nitrogen Cycle:</strong> Explain nitrogen fixation, denitrification, and the role of bacteria in making nitrogen available to organisms.</li>
+        <li><strong>Phosphorus Cycle:</strong> Explain how phosphorus enters ecosystems and how its cycle differs from the other cycles.</li>
+        <li>Explain how <strong>photosynthesis</strong> and <strong>cellular respiration</strong> transform energy and cycle matter.</li>
+        <li>Predict how changes in biological processes can affect atmospheric <strong>CO₂ levels</strong>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="review-topic">
+    <div class="review-topic-header" data-topic="t4">
+      <span class="rtag">7.2</span>
+      <h3>Human Impacts on Ecosystems</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="review-topic-body" id="t4">
+      <ul>
+        <li>Explain the causes and consequences of <strong>eutrophication</strong>.</li>
+        <li>Explain how increasing atmospheric CO₂ contributes to <strong>ocean acidification</strong>.</li>
+        <li>Differentiate between <strong>bioaccumulation</strong> and <strong>biomagnification</strong>.</li>
+        <li>Explain why organisms at higher trophic levels may have higher concentrations of <strong>pollutants</strong>.</li>
+        <li>Connect human activities to disruptions in <strong>biogeochemical cycles</strong> and <strong>food webs</strong>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="review-topic">
+    <div class="review-topic-header" data-topic="t5">
+      <span class="rtag">Skills</span>
+      <h3>Skills to Practice</h3>
+      <span class="chevron">▼</span>
+    </div>
+    <div class="review-topic-body" id="t5">
+      <ul>
+        <li>Interpreting scientific diagrams and models.</li>
+        <li>Applying concepts to unfamiliar ecosystems and real-world scenarios.</li>
+        <li>Identifying and correcting scientific misconceptions.</li>
+        <li>Evaluating scientific claims using biological reasoning.</li>
+        <li>Writing explanations that connect multiple concepts, particularly matter cycling and energy flow.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="review-hint">
+    💡 <strong>Study tip:</strong> For each bullet point, try to explain it out loud in your own words without looking. If you can't, go to that flashcard or quiz question.
+  </div>
+</section>
+
+<!-- ═══════════════ WRITING ═══════════════ -->
+<section id="writing" class="hidden">
+  <div class="section-back-bar">
+    <button class="section-back-btn" data-back type="button">Back to home</button>
+    <span class="section-title-inline">Writing coach</span>
+  </div>
+  <div class="eyebrow">Written-response practice</div>
+  <h2 style="margin-bottom:10px">Explain your thinking</h2>
+  <p style="margin-bottom:24px">Write your answer below. The coach checks for key ideas from the test list. It's a checklist — not a grade.</p>
+
+  <div class="writing-prompt">
+    <b>Practice prompt</b>
+    Explain why matter cycles through an ecosystem while energy flows through it. Include what happens to energy as it moves between trophic levels.
+  </div>
+
+  <textarea id="writingInput" placeholder="Write your explanation here..."></textarea>
+  <div class="writing-controls">
+    <button class="btn-primary" id="btnCheckWriting" type="button">Check my response</button>
+    <button class="btn-ghost" id="btnClearWriting" type="button">Clear</button>
+  </div>
+  <div class="checklist-result hidden" id="writingResult" aria-live="polite"></div>
+</section>
+
+</main>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════════
+const CARDS = [
+["What is an autotroph?","An organism that makes its own food using light or chemical energy.","Auto = self-feeding. Think: plants, algae, some bacteria."],
+["What is a heterotroph?","An organism that gets energy by consuming other organisms or organic matter.","Hetero = other. It eats to get energy."],
+["Photosynthesis vs. chemosynthesis","Photosynthesis uses light energy to make food. Chemosynthesis uses energy from chemical reactions to make food.","Key difference: light vs. chemicals as the energy source."],
+["What is a producer?","An organism that makes organic food and forms the base of a food chain or web.","Producers bring energy into most ecosystems."],
+["What is a consumer?","An organism that gets energy by eating other organisms or organic matter.","Consumers cannot make all their own food."],
+["What is a herbivore?","A consumer that eats plants or other producers.","Herbivores eat producers only."],
+["What is a carnivore?","A consumer that eats animals.","Carnivores eat other consumers."],
+["What is an omnivore?","A consumer that eats both producers and animals.","Omnivore = both plant and animal food."],
+["What is a scavenger?","An organism that eats dead animals it finds.","Scavengers eat dead animals but don't chemically break them down."],
+["What is a detritivore?","An organism that eats detritus: dead organic material and waste.","Detritivores consume bits of dead matter and waste."],
+["What is a decomposer?","An organism such as a fungus or bacterium that chemically breaks down dead organisms and waste, recycling nutrients.","Decomposers break material down and return nutrients to the environment."],
+["Detritivore vs. decomposer — what's the difference?","Detritivores physically ingest pieces of detritus. Decomposers chemically break material down.","Both recycle matter, but in different ways."],
+["What is a food chain?","A model showing one pathway of energy transfer as organisms eat one another.","Chain = one pathway only."],
+["What is a food web?","A model showing many interconnected feeding relationships in an ecosystem.","Web = many linked pathways."],
+["What do arrows in a food web show?","The direction energy moves: from the organism being eaten toward the organism that eats it.","Arrow points from food to eater — toward the consumer."],
+["What is a trophic level?","An organism's feeding position in a food chain or food web.","Producers are level 1; consumers occupy higher levels."],
+["What is a primary consumer?","A consumer that eats producers.","Primary consumers feed directly on producers."],
+["What is a secondary consumer?","A consumer that eats primary consumers.","Secondary = next level after primary."],
+["What is a tertiary consumer?","A consumer that eats secondary consumers.","Trace the feeding arrows to find its food source."],
+["What is the 10% rule?","About 10% of the energy at one trophic level is transferred to the next. The rest is used for life processes or released as heat.","Multiply by 0.10 each time you move up one level."],
+["If a producer level has 1,000 energy units, how much reaches primary consumers?","About 100 units. (1,000 × 0.10 = 100)","Multiply by 0.10 each step up."],
+["If primary consumers have 200 energy units, how much reaches secondary consumers?","About 20 units. (200 × 0.10 = 20)","10% moves up each trophic level."],
+["What are the three ecological pyramids?","Energy, biomass, and numbers. They show energy available, total living mass, and organism count at each trophic level.","Energy = usable energy; biomass = mass; numbers = count."],
+["What does an energy pyramid show?","The amount of energy available at each trophic level.","Energy decreases at higher levels."],
+["What does a biomass pyramid show?","The total mass of living material at each trophic level.","Biomass = mass of living organisms."],
+["What does a pyramid of numbers show?","The number of individual organisms at each trophic level.","Numbers = count of organisms."],
+["Why is energy transfer less than 100%?","Organisms use energy for life processes and much is released as heat.","Energy is used or lost as heat — it's not fully passed on."],
+["What happens to energy NOT transferred to the next trophic level?","It is used for the organism's own life processes or released as heat.","Only ~10% moves up; the rest is used or lost as heat."],
+["Why does matter cycle but energy flow?","Matter is conserved and reused through cycles. Energy enters, moves between organisms, and eventually leaves as heat.","Matter = recycled. Energy = flows through, not recycled."],
+["Is energy recycled in an ecosystem?","No. Energy flows through and eventually leaves as heat; ecosystems need a constant energy input.","Energy flows; matter cycles."],
+["Is matter recycled in an ecosystem?","Yes. Matter is conserved and moves through organisms and the nonliving environment in cycles.","Atoms are reused in new forms."],
+["What are biogeochemical cycles?","Cycles that move matter through living organisms, Earth's nonliving systems, and chemical processes.","Bio = life; geo = Earth."],
+["What three matter cycles are on this test?","Carbon, nitrogen, and phosphorus cycles.","Know the key processes in each cycle."],
+["How does photosynthesis move carbon?","It takes CO₂ from the atmosphere and uses the carbon to build sugars in living organisms.","Photosynthesis moves carbon from air into organic molecules."],
+["How does cellular respiration move carbon?","It breaks down food to release energy and returns CO₂ to the environment.","Respiration releases CO₂."],
+["How does consumption move carbon?","Carbon in food moves from one organism to another when it is eaten.","Eating transfers matter through a food web."],
+["How does decomposition move carbon?","Decomposers break down dead matter and return carbon to the environment.","Dead organisms still contain matter that gets recycled."],
+["What is nitrogen fixation?","Bacteria convert nitrogen gas (N₂) into forms that organisms can use.","Fixation makes atmospheric nitrogen available to living things."],
+["What is denitrification?","Bacteria convert nitrogen compounds back into nitrogen gas, returning it to the atmosphere.","Denitrification sends nitrogen back to the air."],
+["What is the role of bacteria in the nitrogen cycle?","Bacteria carry out nitrogen fixation (making nitrogen available) and denitrification (returning it to the atmosphere).","Without bacteria, nitrogen gas would stay unavailable to most organisms."],
+["Where does phosphorus move in its cycle?","Through rocks, soil, water, and living organisms.","No major atmospheric gas phase — unlike carbon and nitrogen."],
+["Does the phosphorus cycle have a major atmospheric gas phase?","No. This is a key difference from the carbon and nitrogen cycles.","Phosphorus moves through rocks, soil, water, and organisms — not through the air as a gas."],
+["How can photosynthesis affect atmospheric CO₂?","It removes CO₂ from the atmosphere as organisms build sugars.","Photosynthesis takes CO₂ in."],
+["How can cellular respiration affect atmospheric CO₂?","It releases CO₂ as organisms break down food.","Respiration returns CO₂ to the atmosphere."],
+["How can changes in biological processes affect atmospheric CO₂?","Changes in photosynthesis, respiration, consumption, or decomposition change how much CO₂ is taken up or released.","Think: which processes remove CO₂? Which return it?"],
+["What causes eutrophication?","Excess nutrients entering water, often from fertilizer runoff, cause rapid algae growth. When algae die, decomposition uses dissolved oxygen, harming aquatic life.","Nutrients → algae bloom → decomposition → low oxygen."],
+["Why can eutrophication harm fish?","Decomposition of dead algae can use up dissolved oxygen that aquatic organisms need.","Oxygen loss is the main harm, not just the algae itself."],
+["What is ocean acidification?","A change in ocean chemistry where seawater becomes more acidic as it absorbs more atmospheric CO₂.","More dissolved CO₂ lowers ocean pH."],
+["How is rising atmospheric CO₂ linked to ocean acidification?","More CO₂ in the atmosphere dissolves into ocean water and lowers its pH.","Atmosphere-to-ocean CO₂ transfer is the link."],
+["What is bioaccumulation?","The buildup of a pollutant within one organism over time.","Bioaccumulation = inside one body, over time."],
+["What is biomagnification?","An increase in pollutant concentration at higher trophic levels in a food chain.","Biomagnification = concentration rises up the food chain."],
+["Bioaccumulation vs. biomagnification — what's the difference?","Bioaccumulation: buildup in one organism over time. Biomagnification: concentration increases across trophic levels.","One organism over time vs. across the food chain."],
+["Why might top predators have high pollutant concentrations?","They eat many contaminated prey, so persistent pollutants become more concentrated at higher trophic levels.","Follow the pollutant from prey to predator — it multiplies."],
+["How can humans disrupt biogeochemical cycles?","Human activities can add pollutants or excess nutrients, change CO₂ levels, and alter how matter moves through cycles.","Name the human action and the cycle it affects."],
+["How can humans disrupt food webs?","Human activities can change populations, add pollutants, or alter habitats and feeding relationships.","One change ripples through the whole web."],
+["How should you interpret a food-web diagram?","Identify organisms, follow arrows from food to consumer, and trace connected feeding relationships.","Arrows show energy direction — from food to eater."],
+["How do you apply a concept to an unfamiliar ecosystem?","Use the same scientific rule in the new example, even if the organisms or setting are unfamiliar.","Look for the relationship, not the specific animals."],
+["How do you correct a scientific misconception?","Identify the inaccurate idea, then replace it with an explanation supported by the model or evidence.","State what's wrong and why the accurate idea fits."],
+["How do you evaluate a scientific claim?","Use evidence and biological reasoning to decide whether the claim is supported.","Don't rely on guessing or opinion alone."],
+["How are energy flow and matter cycling connected?","Organisms transfer energy as they consume matter. Matter is recycled; energy eventually leaves as heat.","One feeding event does two things: energy moves, matter cycles."],
+["Key difference: energy vs. matter in ecosystems","Energy flows through and leaves as heat. Matter is conserved and recycled.","This is THE central comparison on the test."],
+["How are autotrophs and producers related?","In this unit, autotrophs are producers because they make their own food.","Look for the organism making food rather than eating it."],
+["How are heterotrophs and consumers related?","Heterotrophs get energy from other organisms or organic matter, so they are consumers.","Hetero = other; it gets food from other sources."],
+["Can an omnivore occupy more than one trophic level?","Yes — because it eats both producers and consumers, its trophic position varies with what it eats.","Follow the specific food relationship shown in the question."],
+["What does a food web show that a food chain doesn't?","A food web shows many connected feeding relationships; a food chain shows only one pathway.","Web = many paths; chain = one path."],
+["What happens if one population in a food web decreases?","Populations that depend on it for food may decrease; populations it eats may increase. The result depends on the web structure.","Trace both what it eats and what eats it."],
+["What does biogeochemical mean?","Matter moves through living organisms, Earth's nonliving systems, and chemical processes.","Bio = life; geo = Earth; chemical = the reactions."],
+["How does phosphorus enter an ecosystem?","Mainly from the weathering of rocks releasing phosphorus into soil and water.","Unlike carbon and nitrogen, there is no major gas phase."],
+["Connection between photosynthesis and cellular respiration in matter cycling","Photosynthesis takes CO₂ and builds organic molecules; respiration breaks them down and returns CO₂. Together they cycle carbon.","They are like two halves of the carbon cycle."],
+["Connection between photosynthesis and cellular respiration in energy transformation","Photosynthesis converts light energy into chemical energy in sugars; respiration releases that stored energy for life processes.","Energy is transformed, not recycled."],
+["What commonly causes eutrophication?","Runoff carrying excess nutrients such as fertilizer into aquatic ecosystems.","Connect runoff → excess nutrients → algae bloom → low oxygen."],
+["What is the first trophic level in most ecosystems?","Producers such as plants or algae.","Energy enters the food chain through producers."],
+["What would happen to atmospheric CO₂ if photosynthesis decreased globally?","Atmospheric CO₂ would likely increase — less is being removed by photosynthesis.","Less CO₂ taken in → more stays in the atmosphere."],
+["What would happen to atmospheric CO₂ if decomposition increased globally?","Atmospheric CO₂ would likely increase — more carbon from dead matter is released.","More decomposition = more CO₂ returned to the atmosphere."],
+["How does the 10% rule affect how many trophic levels an ecosystem can support?","Because so little energy transfers to each higher level, most ecosystems can only support a few trophic levels before energy runs out.","Energy loss limits the length of a food chain."],
+["How can you identify a producer in an unlabelled food web?","Producers have arrows pointing away from them and nothing eats them in the web (they are at the base).","Nothing feeds on the producer — it is the energy source."],
+["What is the role of decomposers in matter cycles?","They break down dead organisms and waste, returning nutrients and carbon to the environment.","Without decomposers, matter would stay locked in dead organisms."],
+["What does it mean to 'apply biological reasoning'?","Use evidence from biology — feeding relationships, energy rules, cycle processes — to support or evaluate a claim.","Show your logic using scientific ideas."],
+["What does it mean to interpret a scientific model?","Read the labels, arrows, and relationships in the model to draw conclusions or make predictions.","Look at the structure — not just the picture."],
+["How does consumption fit into the carbon cycle?","When organisms eat, carbon stored in food moves from one organism to another.","Eating is a way carbon travels through a food web."],
+["What does it mean to connect matter cycling and energy flow?","Explain that the same feeding event both transfers energy (which flows) and moves matter (which is later recycled).","One feeding: energy moves, matter cycles."],
+["Give an example of a human activity that disrupts a biogeochemical cycle.","Adding excess fertilizer increases nitrogen in runoff, which can disrupt the nitrogen cycle and cause eutrophication.","Human action → disruption → cycle effect."],
+["Give an example of a human activity that disrupts a food web.","Overhunting a predator can cause its prey population to increase, which can then reduce the prey's food source.","Removing one organism causes a chain reaction through the web."],
+["What must you include to fully explain why matter cycles but energy flows?","That matter is conserved and reused through cycles, AND that energy is used by organisms and lost as heat — so it must keep entering the ecosystem.","Both parts are needed."],
+["Common misconception about arrows in a food web","A common mistake: thinking the arrow points from predator to prey. Actually, arrows point in the direction energy flows — from food to eater.","Arrow points toward the consumer, not the prey."],
+["Common misconception about the 10% rule","A common mistake: thinking 10% is the amount lost. Actually, ~10% is passed on and ~90% is used or lost as heat.","10% moves up; 90% is used or lost."],
+["Common misconception: does matter disappear in ecosystems?","No. Matter is conserved; it changes form and moves through biogeochemical cycles.","Atoms are recycled, not destroyed."],
+["Common misconception: decomposers vs. detritivores","Decomposers chemically break material down; detritivores physically ingest it. Both recycle matter but in different ways.","Decomposers = chemical breakdown; detritivores = physical ingestion."],
+["What does it mean that matter is 'conserved'?","The same atoms exist before and after a process — they are rearranged, not created or destroyed.","Conservation of matter: atoms are recycled, not destroyed."],
+["Why must energy continuously enter an ecosystem?","Energy flows through and is eventually lost as heat — unlike matter, it is not recycled. So new energy (usually from the Sun) must constantly enter.","Energy flows out as heat; matter stays and cycles."],
+["What is an ecosystem?","A community of organisms together with the nonliving parts of their environment, interacting as a system.","Living + nonliving parts, all interacting."],
+["How does the direction of arrows in a food web relate to energy?","Arrows point in the direction energy flows — from the organism being eaten (the energy source) to the organism doing the eating (the receiver).","Energy flows in the direction the arrow points."],
+["How is biomass measured?","Biomass is usually measured as the dry mass of living material — the mass after water is removed.","Dry mass avoids counting water weight."],
+["Why do most food chains have fewer than five trophic levels?","The 10% rule means so little energy reaches higher levels that there is not enough to support another level.","10% per level: by level 5 or 6, almost nothing is left."]
+];
+
+const QUESTIONS = [
+{"q":"A plant uses sunlight to make sugars. Which term describes the plant's way of getting energy?","opts":["Heterotroph","Autotroph","Scavenger","Detritivore"],"a":1,"why":"A plant makes its own food using light energy — that makes it an autotroph.","wrong":["Heterotrophs eat other organisms for energy. The plant makes its own.","✓ Correct: autotrophs make their own food.","Scavengers eat dead animals they find.","Detritivores eat dead organic material and waste."],"section":"4.1"},
+{"q":"Which statement correctly compares photosynthesis and chemosynthesis?","opts":["Both use sunlight","Photosynthesis uses chemicals; chemosynthesis uses light","Photosynthesis uses light; chemosynthesis uses chemical energy","Both are ways animals hunt"],"a":2,"why":"The key difference is the energy source: photosynthesis uses light, chemosynthesis uses energy from chemical reactions.","wrong":["Chemosynthesis does not need sunlight.","These energy sources are reversed.","✓ Correct: photosynthesis = light; chemosynthesis = chemical energy.","Neither describes hunting."],"section":"4.1"},
+{"q":"A bear eats berries and fish. What type of consumer is it?","opts":["Herbivore","Carnivore","Omnivore","Decomposer"],"a":2,"why":"The bear eats both plant material (berries) and animals (fish), making it an omnivore.","wrong":["Herbivores eat producers only — but the bear also eats fish.","Carnivores eat animals only — but the bear also eats berries.","✓ Correct: omnivores eat both producers and animals.","Decomposers chemically break down dead material."],"section":"4.1"},
+{"q":"A mushroom breaks down a dead log and releases nutrients. What role is it playing?","opts":["Producer","Decomposer","Scavenger","Herbivore"],"a":1,"why":"Fungi chemically break down dead organisms and recycle nutrients — that is a decomposer.","wrong":["Producers make their own food.","✓ Correct: decomposers break down dead material and recycle nutrients.","Scavengers eat dead animals they find; a mushroom chemically breaks material down.","Herbivores eat producers."],"section":"4.1"},
+{"q":"In the chain grass → rabbit → fox, what does the arrow from rabbit to fox mean?","opts":["The fox gives energy to the rabbit","The rabbit gives energy to the fox","The rabbit hunts the fox","The fox makes its own food"],"a":1,"why":"Arrows point in the direction energy moves. The fox gets energy by eating the rabbit.","wrong":["The arrow points away from the rabbit, not the fox.","✓ Correct: energy moves from the rabbit (food) to the fox (consumer).","The arrow direction shows the rabbit is food for the fox, not the other way.","Making its own food describes an autotroph."],"section":"4.2"},
+{"q":"A food web is different from a food chain because a food web…","opts":["Shows only one feeding pathway","Shows many connected feeding relationships","Shows only producers","Does not show energy transfer"],"a":1,"why":"A food web combines many connected feeding relationships, while a food chain shows one pathway.","wrong":["One pathway describes a food chain.","✓ Correct: a food web shows many connected pathways.","Food webs include producers and consumers.","Food webs do show energy transfer — through feeding relationships."],"section":"4.2"},
+{"q":"A producer has 1,000 units of energy. About how much is available to the next trophic level?","opts":["10 units","100 units","500 units","900 units"],"a":1,"why":"10% of 1,000 is 100. The 10% rule: multiply by 0.10 to move up one level.","wrong":["10 units would be 1% of 1,000.","✓ Correct: 1,000 × 0.10 = 100 units.","500 units is 50%, not 10%.","900 units is roughly the amount NOT transferred."],"section":"4.2"},
+{"q":"Why is less energy available at higher trophic levels?","opts":["Energy is destroyed","Organisms use energy for life processes and much is released as heat","Matter disappears","Predators do not need energy"],"a":1,"why":"Only about 10% transfers to the next level. Organisms use most of the energy and much is released as heat.","wrong":["Energy is not destroyed; it is transformed or transferred.","✓ Correct: life processes use energy and much is released as heat.","Matter is conserved and cycles — this doesn't explain energy decrease.","All organisms, including predators, need energy."],"section":"4.2"},
+{"q":"Which pyramid represents the total living mass at each trophic level?","opts":["Pyramid of energy","Pyramid of biomass","Pyramid of numbers","Food web"],"a":1,"why":"Biomass = total mass of living material. A biomass pyramid compares that across trophic levels.","wrong":["An energy pyramid shows energy available.","✓ Correct: biomass = mass of living material.","A numbers pyramid counts organisms.","A food web shows feeding relationships, not a pyramid."],"section":"4.2"},
+{"q":"Which statement best explains why matter cycles but energy flows?","opts":["Matter is reused; energy eventually leaves as heat","Energy is recycled forever; matter disappears","Neither matter nor energy moves","Matter is created by consumers"],"a":0,"why":"Matter is conserved and recycled through cycles. Energy moves through the ecosystem and eventually leaves as heat.","wrong":["✓ Correct: matter is reused, energy eventually leaves as heat.","This reverses the ideas and incorrectly says matter disappears.","Both matter and energy move through ecosystems.","Consumers do not create matter."],"section":"4.2"},
+{"q":"Which process takes carbon dioxide out of the atmosphere and puts it into sugars?","opts":["Cellular respiration","Photosynthesis","Decomposition","Denitrification"],"a":1,"why":"Photosynthesis uses CO₂ to build sugars, moving carbon into living organisms.","wrong":["Cellular respiration releases CO₂.","✓ Correct: photosynthesis takes in CO₂ to make sugars.","Decomposition can return carbon to the environment.","Denitrification is part of the nitrogen cycle."],"section":"4.3"},
+{"q":"What do nitrogen-fixing bacteria do?","opts":["Return nitrogen gas to the atmosphere","Convert nitrogen gas into forms organisms can use","Turn phosphorus into sunlight","Remove all nitrogen from ecosystems"],"a":1,"why":"Nitrogen-fixing bacteria convert atmospheric N₂ into forms that can enter ecosystems and become available to organisms.","wrong":["Returning nitrogen gas to the atmosphere is denitrification.","✓ Correct: nitrogen fixation makes nitrogen available in usable forms.","Phosphorus and sunlight are unrelated to nitrogen fixation.","Nitrogen is cycled, not permanently removed."],"section":"4.3"},
+{"q":"Which process returns nitrogen to the atmosphere as nitrogen gas?","opts":["Nitrogen fixation","Photosynthesis","Denitrification","Consumption"],"a":2,"why":"Denitrification is carried out by bacteria and returns nitrogen gas to the atmosphere.","wrong":["Nitrogen fixation makes atmospheric nitrogen available in usable forms.","Photosynthesis is part of the carbon cycle.","✓ Correct: denitrification returns N₂ to the atmosphere.","Consumption moves matter through food webs."],"section":"4.3"},
+{"q":"A lake receives excess fertilizer runoff. Algae grow rapidly, then die; decomposers use up dissolved oxygen. What is this?","opts":["Ocean acidification","Eutrophication","Biomagnification","Chemosynthesis"],"a":1,"why":"Eutrophication: excess nutrients → algae bloom → decomposition → low dissolved oxygen → harm to aquatic life.","wrong":["Ocean acidification is linked to CO₂ entering ocean water.","✓ Correct: this is eutrophication.","Biomagnification is pollutant concentration increasing up the food chain.","Chemosynthesis uses chemical energy to make food."],"section":"7.2"},
+{"q":"More atmospheric CO₂ dissolves into ocean water. What effect does this have?","opts":["Ocean water becomes less acidic","Ocean acidification increases","Nitrogen fixation stops","The food chain becomes a food web"],"a":1,"why":"Dissolved CO₂ lowers ocean pH — the water becomes more acidic.","wrong":["The water becomes MORE acidic, not less.","✓ Correct: dissolved CO₂ causes ocean acidification.","Nitrogen fixation is a separate nitrogen-cycle process.","This describes chemistry, not feeding relationships."],"section":"7.2"},
+{"q":"A pollutant builds up in one fish over its entire lifetime. Which term describes this?","opts":["Biomagnification","Bioaccumulation","Eutrophication","Denitrification"],"a":1,"why":"Bioaccumulation = buildup of a pollutant within one organism over time.","wrong":["Biomagnification is pollutant concentration increasing at higher trophic levels.","✓ Correct: buildup within one organism over time is bioaccumulation.","Eutrophication involves excess nutrients in water.","Denitrification returns nitrogen gas to the atmosphere."],"section":"7.2"},
+{"q":"A pollutant is more concentrated in an eagle than in the small fish it ultimately came from. What is this?","opts":["Bioaccumulation","Biomagnification","Photosynthesis","Nitrogen fixation"],"a":1,"why":"Biomagnification = pollutant concentration increases at higher trophic levels in a food chain.","wrong":["Bioaccumulation is buildup within one organism over time.","✓ Correct: increasing concentration up the food chain is biomagnification.","Photosynthesis uses light energy to make sugars.","Nitrogen fixation makes nitrogen available in usable forms."],"section":"7.2"},
+{"q":"Which statement about the phosphorus cycle is correct?","opts":["Phosphorus has a major atmospheric gas phase","Phosphorus cycles mainly through rocks, soil, water, and organisms","Phosphorus is fixed by bacteria like nitrogen","Phosphorus only cycles through living organisms"],"a":1,"why":"The phosphorus cycle has no major atmospheric gas phase — it moves through rocks, soil, water, and organisms. This distinguishes it from carbon and nitrogen cycles.","wrong":["Phosphorus does NOT have a major atmospheric gas phase.","✓ Correct: phosphorus cycles through rocks, soil, water, and organisms.","Nitrogen fixation involves N₂ gas; phosphorus has no equivalent bacterial gas process.","Phosphorus also moves through nonliving parts of the environment."],"section":"4.3"},
+{"q":"What happens to energy that is NOT transferred to the next trophic level?","opts":["It is stored in the soil forever","It is used for the organism's life processes and released as heat","It is converted into matter","It moves back down the food chain"],"a":1,"why":"Organisms use most of the energy they take in for their own life processes, and much is eventually released as heat. Only ~10% transfers upward.","wrong":["Energy is not permanently stored in soil.","✓ Correct: energy is used for life processes and released as heat.","Energy is not converted into matter.","Energy flows upward through the food chain, not back down."],"section":"4.2"},
+{"q":"Which skill is explicitly listed on the teacher's test slide?","opts":["Memorizing only definitions","Interpreting scientific diagrams and models","Ignoring unfamiliar examples","Guessing without evidence"],"a":1,"why":"The slide lists: interpreting scientific diagrams and models, applying ideas to new scenarios, correcting misconceptions, and evaluating claims using biological reasoning.","wrong":["The slide asks for application and reasoning, not just memorization.","✓ Correct: interpreting scientific diagrams and models is explicitly listed.","The slide says to apply concepts to unfamiliar ecosystems.","The slide emphasizes evaluating claims using biological reasoning."],"section":"Skills"}
+];
+
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let mastered = new Set(JSON.parse(localStorage.getItem("eq2_mastered")||"[]"));
+let cardOrder = CARDS.map((_,i)=>i);
+let cardIdx = 0;
+let flipped = false;
+let unmasteredOnly = false;
+let quizSet = [], quizIdx = 0, quizScore = 0, quizAnswered = false;
+
+const $ = id => document.getElementById(id);
+
+// ════════════════════════════════════════════════════════════
+// NAV
+// ════════════════════════════════════════════════════════════
+const SECTIONS = ["home","cards","quiz","review","writing"];
+function showSection(id) {
+  SECTIONS.forEach(s => $(s).classList.toggle("hidden", s !== id));
+  $("backBtn").style.display = id === "home" ? "none" : "";
+  $("masteryPill").style.display = id === "home" ? "none" : "flex";
+  // orbs only on home
+  ["orb1","orb2","orb3"].forEach(o => $(o).classList.toggle("visible", id==="home"));
+  updatePill();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// ════════════════════════════════════════════════════════════
+// MASTERY
+// ════════════════════════════════════════════════════════════
+function saveMastered(){localStorage.setItem("eq2_mastered",JSON.stringify([...mastered]))}
+function updatePill(){
+  $("pillNum").textContent = mastered.size;
+  $("masteryNum").textContent = mastered.size;
+  const pct = mastered.size/CARDS.length*100;
+  $("masteryFill").style.width = pct+"%";
+  $("masteryMsg").textContent = pct===100?"🎉 All mastered!":pct>=75?"Almost there!":pct>=50?"More than halfway!":pct>=25?"Good progress!":"Keep going!";
+}
+
+// ════════════════════════════════════════════════════════════
+// FLASHCARDS
+// ════════════════════════════════════════════════════════════
+function activeOrder(){
+  if(!unmasteredOnly) return cardOrder;
+  const u = cardOrder.filter(i=>!mastered.has(i));
+  return u.length ? u : cardOrder;
+}
+
+function renderCard(){
+  const order = activeOrder();
+  const raw = order[cardIdx % order.length];
+  const c = CARDS[raw];
+  flipped = false;
+  $("cardLabel").textContent = "Question · tap to flip";
+  $("cardQ").textContent = c[0];
+  $("cardA").textContent = c[1];
+  $("cardTip").textContent = "💡 " + c[2];
+  $("cardA").classList.add("hidden");
+  $("cardTip").classList.add("hidden");
+  $("cardQ").classList.remove("hidden");
+  const ord2 = activeOrder();
+  const pos = cardIdx % ord2.length;
+  $("cardCounter").innerHTML = `Card ${pos+1} of ${ord2.length}${mastered.has(raw)?'<span class="mastered-chip">✓ Mastered</span>':""}`;
+  $("cardProg").style.width = ((pos+1)/ord2.length*100)+"%";
+  updatePill();
+}
+
+function flipCard(){
+  flipped = !flipped;
+  $("cardLabel").textContent = flipped ? "Answer — tap to flip back" : "Question · tap to flip";
+  $("cardQ").classList.toggle("hidden", flipped);
+  $("cardA").classList.toggle("hidden", !flipped);
+  $("cardTip").classList.toggle("hidden", !flipped);
+}
+
+function markCard(isMastered){
+  const raw = activeOrder()[cardIdx % activeOrder().length];
+  if(isMastered) mastered.add(raw); else mastered.delete(raw);
+  saveMastered();
+  cardIdx = (cardIdx+1) % activeOrder().length;
+  renderCard();
+}
+
+$("flashcard").addEventListener("click", flipCard);
+$("flashcard").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){e.preventDefault();flipCard();}});
+$("btnFlip").addEventListener("click", flipCard);
+$("btnPrev").addEventListener("click", ()=>{ cardIdx=(cardIdx-1+activeOrder().length)%activeOrder().length; renderCard();});
+$("btnNext").addEventListener("click", ()=>{ cardIdx=(cardIdx+1)%activeOrder().length; renderCard();});
+$("btnGot").addEventListener("click", ()=>markCard(true));
+$("btnLearning").addEventListener("click", ()=>markCard(false));
+$("btnShuffle").addEventListener("click", ()=>{ cardOrder=cardOrder.sort(()=>Math.random()-.5); cardIdx=0; renderCard();});
+$("btnUnmastered").addEventListener("click", ()=>{
+  unmasteredOnly=!unmasteredOnly;
+  $("btnUnmastered").textContent = unmasteredOnly ? "Show all cards" : "Show only unmastered";
+  cardIdx=0; renderCard();
+});
+$("btnReset").addEventListener("click", ()=>{
+  if(!confirm("Reset all mastery progress?")) return;
+  mastered.clear(); saveMastered(); renderCard();
+});
+$("startCards").addEventListener("click", ()=>{ cardIdx=0; renderCard(); showSection("cards");});
+// alias buttons on home
+document.getElementById("startCardsAlt").addEventListener("click",()=>{ cardIdx=0; renderCard(); showSection("cards");});
+document.getElementById("startQuizAlt").addEventListener("click",()=>startQuiz());
+
+// ════════════════════════════════════════════════════════════
+// QUIZ
+// ════════════════════════════════════════════════════════════
+function sectionFor(q){
+  const s = q.section||"";
+  if(s==="4.1") return "PowerPoint section 4.1 — Energy, Producers, and Consumers";
+  if(s==="4.2") return "PowerPoint section 4.2 — Energy Flow in Ecosystems";
+  if(s==="4.3") return "PowerPoint section 4.3 — Cycles of Matter";
+  if(s==="7.2") return "PowerPoint section 7.2 — Human Impacts on Ecosystems";
+  return "Skills to Practice — interpreting models, applying concepts, correcting misconceptions";
+}
+
+function startQuiz(){
+  quizSet=[...QUESTIONS].sort(()=>Math.random()-.5);
+  quizIdx=0; quizScore=0; quizAnswered=false;
+  renderQuestion(); showSection("quiz");
+}
+
+function renderQuestion(){
+  quizAnswered=false;
+  const q=quizSet[quizIdx];
+  $("quizCounter").textContent=`Q${quizIdx+1}/${quizSet.length} · Score: ${quizScore}`;
+  $("quizProg").style.width=(quizIdx/quizSet.length*100)+"%";
+  $("quizTopic").textContent="Section "+q.section;
+  $("quizQ").textContent=q.q;
+  $("optionsGrid").innerHTML="";
+  $("feedbackBox").classList.add("hidden");
+  $("btnNextQ").classList.add("hidden");
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement("button");
+    b.className="opt"; b.type="button";
+    b.textContent=String.fromCharCode(65+i)+". "+opt;
+    b.addEventListener("click",()=>choose(i));
+    $("optionsGrid").appendChild(b);
+  });
+}
+
+function choose(i){
+  if(quizAnswered) return;
+  quizAnswered=true;
+  const q=quizSet[quizIdx];
+  const correct=i===q.a;
+  if(correct) quizScore++;
+  [...$("optionsGrid").children].forEach((b,j)=>{
+    b.disabled=true;
+    if(j===q.a) b.classList.add("correct");
+    if(j===i&&!correct) b.classList.add("wrong");
+  });
+  const fb=$("feedbackBox");
+  fb.className="feedback-box "+(correct?"good":"bad");
+  fb.innerHTML="";
+  const h=document.createElement("h3");
+  h.textContent=correct?"✓ Correct — here's why":"Not quite — let's fix the thinking";
+  fb.appendChild(h);
+  const p1=document.createElement("p");
+  p1.textContent=q.why;
+  fb.appendChild(p1);
+  if(!correct){
+    const p2=document.createElement("p");
+    p2.className="wrong-reason";
+    p2.textContent="Why your choice doesn't fit: "+q.wrong[i];
+    fb.appendChild(p2);
+    const p3=document.createElement("p");
+    p3.textContent="Correct answer: "+q.opts[q.a];
+    fb.appendChild(p3);
+  }
+  const ref=document.createElement("p");
+  ref.className="review-ref";
+  ref.textContent="📖 Review: "+sectionFor(q);
+  fb.appendChild(ref);
+  fb.classList.remove("hidden");
+  $("quizCounter").textContent=`Q${quizIdx+1}/${quizSet.length} · Score: ${quizScore}`;
+  $("btnNextQ").textContent=quizIdx===quizSet.length-1?"See results →":"Next →";
+  $("btnNextQ").classList.remove("hidden");
+}
+
+function showResults(){
+  $("quizProg").style.width="100%";
+  $("quizCounter").textContent="Done!";
+  $("quizTopic").textContent="Your result";
+  const pct=Math.round(quizScore/quizSet.length*100);
+  const grade=pct===100?"Perfect! 🎉":pct>=80?"Great work!":pct>=60?"Getting there!":"Keep practising!";
+  $("quizQ").innerHTML=`<span class="score-big">${quizScore}/${quizSet.length}</span><span style="color:var(--accent);font-size:1.1rem">${grade}</span>`;
+  $("optionsGrid").innerHTML="";
+  const fb=$("feedbackBox");
+  fb.className="feedback-box "+(pct>=70?"good":"bad");
+  fb.innerHTML=`<p>${quizScore===quizSet.length?"You got every question correct. Well done.":"Review the flashcards for topics that felt hard, then try again."}</p>`;
+  fb.classList.remove("hidden");
+  $("btnNextQ").textContent="Try again";
+  $("btnNextQ").classList.remove("hidden");
+  $("btnNextQ").onclick=()=>{ $("btnNextQ").onclick=null; startQuiz(); };
+}
+
+$("startQuiz").addEventListener("click", startQuiz);
+// home CTA button (second startQuiz is handled via startQuizAlt alias)
+$("btnNextQ").addEventListener("click", ()=>{
+  if(quizIdx<quizSet.length-1){ quizIdx++; renderQuestion(); }
+  else showResults();
+});
+
+// ════════════════════════════════════════════════════════════
+// REVIEW — accordion
+// ════════════════════════════════════════════════════════════
+document.querySelectorAll(".review-topic-header").forEach(hdr=>{
+  hdr.addEventListener("click",()=>{
+    const id=hdr.dataset.topic;
+    const body=$(id);
+    const open=body.classList.contains("open");
+    // close all
+    document.querySelectorAll(".review-topic-body").forEach(b=>b.classList.remove("open"));
+    document.querySelectorAll(".review-topic-header").forEach(h=>h.classList.remove("open"));
+    if(!open){ body.classList.add("open"); hdr.classList.add("open"); }
+  });
+});
+// open first on load
+document.querySelector(".review-topic-header").click();
+
+$("startReview").addEventListener("click",()=>showSection("review"));
+
+// ════════════════════════════════════════════════════════════
+// WRITING
+// ════════════════════════════════════════════════════════════
+$("startWriting").addEventListener("click",()=>{ $("writingResult").classList.add("hidden"); showSection("writing");});
+$("btnClearWriting").addEventListener("click",()=>{ $("writingInput").value=""; $("writingResult").classList.add("hidden");});
+$("btnCheckWriting").addEventListener("click",()=>{
+  const a=$("writingInput").value.trim().toLowerCase();
+  const checks=[
+    {label:"Matter is conserved and recycled through cycles",terms:["matter","recycl","cycle","conserved","atoms","reused"]},
+    {label:"Energy flows through ecosystems and is not recycled",terms:["energy","flow","not recycled","leaves","heat","lost"]},
+    {label:"Energy is used for life processes and released as heat",terms:["heat","life processes","used","respiration","organism"]},
+    {label:"Only about 10% of energy transfers to the next trophic level",terms:["10%","ten percent","trophic level","next level","one tenth","ten"]},
+    {label:"Matter cycles because atoms are conserved, not destroyed",terms:["conserved","recycled","reused","cycle","atoms","not destroyed","stays"]},
+  ];
+  const found=checks.filter(c=>c.terms.some(t=>a.includes(t)));
+  const missing=checks.filter(c=>!found.includes(c));
+  const box=$("writingResult");
+  box.className="checklist-result "+(missing.length===0?"good":"bad");
+  box.innerHTML="";
+  const h=document.createElement("h3");
+  h.textContent=found.length===checks.length?"Strong response — all key ideas found":found.length>=3?"Good start — a couple of ideas to add":"Keep going — several key ideas to add";
+  box.appendChild(h);
+  const summary=document.createElement("p");
+  summary.style.cssText="color:var(--muted);margin-bottom:10px;font-size:.9rem";
+  summary.textContent=`${found.length} of ${checks.length} key ideas found in your response.`;
+  box.appendChild(summary);
+  const ul=document.createElement("ul");
+  found.forEach(c=>{
+    const li=document.createElement("li");
+    li.className="check-pass";
+    li.textContent="✓ "+c.label;
+    ul.appendChild(li);
+  });
+  missing.forEach(c=>{
+    const li=document.createElement("li");
+    li.className="check-fail";
+    li.textContent="✗ Add: "+c.label;
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+  const tip=document.createElement("p");
+  tip.style.cssText="color:var(--muted);font-size:.85rem;margin-top:12px";
+  tip.textContent="Sections to review: 4.2 Energy Flow in Ecosystems and 4.3 Cycles of Matter. This is a keyword checklist — compare with your class notes for a full check.";
+  box.appendChild(tip);
+  box.classList.remove("hidden");
+});
+
+// ════════════════════════════════════════════════════════════
+// BACK
+$("backBtn").addEventListener("click",()=>showSection("home"));
+// wire ALL section back buttons — covers every [data-back] element
+document.querySelectorAll("[data-back]").forEach(function(btn){
+  btn.addEventListener("click", function(){ showSection("home"); });
+});
+
+// ════════════════════════════════════════════════════════════
+// INIT — script is after all HTML so DOM is ready
+// ════════════════════════════════════════════════════════════
+showSection("home");
+["orb1","orb2","orb3"].forEach(o => $(o).classList.add("visible"));
+
+// ════════════════════════════════════════════════════════════
+// NEURON ANIMATION (runs independently, no DOM dependency)
+// ════════════════════════════════════════════════════════════
+(function(){
+  const cv = document.getElementById("starCanvas");
+  const ctx = cv.getContext("2d");
+  let W, H;
+  function resize(){
+    W = cv.width = window.innerWidth;
+    H = cv.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener("resize", ()=>{ resize(); buildNodes(); });
+
+  // ── nodes ──
+  const NODE_COUNT = 42;
+  const CONNECT_DIST = 180;
+  let nodes = [];
+  let pulses = [];
+
+  function buildNodes(){
+    nodes = [];
+    for(let i = 0; i < NODE_COUNT; i++){
+      nodes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.28,
+        vy: (Math.random() - 0.5) * 0.28,
+        r: Math.random() * 2.5 + 1.5,
+        glow: Math.random(),
+        glowDir: Math.random() > 0.5 ? 1 : -1,
+        glowSpeed: Math.random() * 0.012 + 0.004,
+      });
+    }
+  }
+  buildNodes();
+
+  // ── pulse ──
+  function firePulse(){
+    // pick a random connected pair
+    const a = Math.floor(Math.random() * nodes.length);
+    const b = Math.floor(Math.random() * nodes.length);
+    if(a === b) return;
+    const dx = nodes[b].x - nodes[a].x;
+    const dy = nodes[b].y - nodes[a].y;
+    if(Math.sqrt(dx*dx+dy*dy) > CONNECT_DIST) return;
+    pulses.push({ from: a, to: b, t: 0, speed: Math.random() * 0.016 + 0.012 });
+  }
+  setInterval(firePulse, 120);
+
+  function draw(){
+    ctx.clearRect(0, 0, W, H);
+
+    // move nodes
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < 0 || n.x > W) n.vx *= -1;
+      if(n.y < 0 || n.y > H) n.vy *= -1;
+      n.glow += n.glowSpeed * n.glowDir;
+      if(n.glow > 1){ n.glow = 1; n.glowDir = -1; }
+      if(n.glow < 0){ n.glow = 0; n.glowDir = 1; }
+    });
+
+    // draw connections
+    for(let i = 0; i < nodes.length; i++){
+      for(let j = i+1; j < nodes.length; j++){
+        const dx = nodes[j].x - nodes[i].x;
+        const dy = nodes[j].y - nodes[i].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if(dist < CONNECT_DIST){
+          const alpha = (1 - dist/CONNECT_DIST) * 0.18;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(142,214,142,${alpha})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // draw pulses
+    pulses = pulses.filter(p => p.t <= 1);
+    pulses.forEach(p => {
+      p.t += p.speed;
+      const a = nodes[p.from], b = nodes[p.to];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist > CONNECT_DIST) return;
+      const px = a.x + dx * p.t;
+      const py = a.y + dy * p.t;
+      const fade = 1 - Math.abs(p.t - 0.5) * 2; // brightest at midpoint
+      // glow
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, 8);
+      grad.addColorStop(0, `rgba(180,255,180,${0.9 * fade})`);
+      grad.addColorStop(0.4, `rgba(100,220,120,${0.5 * fade})`);
+      grad.addColorStop(1, `rgba(80,180,100,0)`);
+      ctx.beginPath();
+      ctx.arc(px, py, 8, 0, Math.PI*2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      // core dot
+      ctx.beginPath();
+      ctx.arc(px, py, 2.5, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(220,255,220,${fade})`;
+      ctx.fill();
+    });
+
+    // draw nodes
+    nodes.forEach(n => {
+      const alpha = 0.35 + n.glow * 0.5;
+      // outer glow
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r * 5);
+      g.addColorStop(0, `rgba(160,230,140,${alpha * 0.6})`);
+      g.addColorStop(1, `rgba(80,160,80,0)`);
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r * 5, 0, Math.PI*2);
+      ctx.fillStyle = g;
+      ctx.fill();
+      // core
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(200,255,180,${alpha})`;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
